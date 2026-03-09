@@ -1,0 +1,39 @@
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(13, 71, 161, 0.18), transparent 35%),
+    linear-gradient(180deg, #07111f 0%, #0f1f2e 50%, #15283b 100%);
+  color: #edf2f7;
+}
+
+ion-content {
+  --background: transparent;
+}
+
+.page-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.surface-card {
+  background: rgba(12, 24, 38, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.22);
+}
