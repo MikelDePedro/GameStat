@@ -43,11 +43,11 @@ import { AuthService } from '../core/services/auth.service';
       <div class="page-shell auth-page">
         <section class="surface-card auth-card">
           <h1>Accede a tu cuenta</h1>
-          <p>Usuario demo disponible: <strong>demo@gamestat.app</strong></p>
+          <p>Usuario demo disponible: <strong>demo&#64;gamestat.app</strong></p>
 
           <ion-item>
             <ion-label position="stacked">Email</ion-label>
-            <ion-input [(ngModel)]="email" type="email" placeholder="demo@gamestat.app"></ion-input>
+            <ion-input [(ngModel)]="email" type="email" placeholder="demo&#64;gamestat.app"></ion-input>
           </ion-item>
 
           <ion-button expand="block" (click)="submit()">Entrar</ion-button>

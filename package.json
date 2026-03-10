@@ -16,7 +16,11 @@
     "@angular/platform-browser": "^17.3.0",
     "@angular/platform-browser-dynamic": "^17.3.0",
     "@angular/router": "^17.3.0",
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.6.0",
+    "@capacitor/core": "^7.2.0",
     "@ionic/angular": "^8.0.0",
+    "@supabase/supabase-js": "^2.99.0",
     "ionicons": "^7.4.0",
     "rxjs": "^7.8.1",
     "tslib": "^2.6.2",
@@ -33,6 +37,7 @@
     "karma-coverage": "^2.2.1",
     "karma-jasmine": "^5.1.0",
     "karma-jasmine-html-reporter": "^2.1.0",
+    "supabase": "^2.78.1",
     "typescript": "~5.4.5"
   }
 }
