@@ -1,5 +1,5 @@
 import { Component, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   IonButton,
   IonContent,
@@ -8,20 +8,15 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone';
 
-import { AuthService } from '../core/services/auth.service';
-import { ChatService } from '../core/services/chat.service';
-import { SocialService } from '../core/services/social.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ChatService } from '../../core/services/chat.service';
+import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, IonButton, IonContent, IonHeader, IonTitle, IonToolbar],
+  imports: [IonButton, IonContent, RouterLink, RouterLinkActive],
+  styleUrls: ['./home.page.scss'],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Home</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content>
       <div class="page-shell page">
         <section class="welcome surface-card">
@@ -49,44 +44,21 @@ import { SocialService } from '../core/services/social.service';
           <article class="surface-card quick-card">
             <h2>Nueva review</h2>
             <p>Comparte tu opinion sobre un juego o actualizacion.</p>
-            <ion-button routerLink="/tabs/review" fill="outline">Ir a Review</ion-button>
+            <ion-button class="action-button" color="primary" expand="block" [routerLink]="['/tabs/review']" routerLinkActive="action-button-active">
+              Ir a Review
+            </ion-button>
           </article>
           <article class="surface-card quick-card">
             <h2>Comunidad</h2>
             <p>Publica contenido o entra a tus chats personales y grupales.</p>
-            <ion-button routerLink="/tabs/social" fill="outline">Ir a Social</ion-button>
+            <ion-button class="action-button" color="primary" expand="block" [routerLink]="['/tabs/social']" routerLinkActive="action-button-active">
+              Ir a Social
+            </ion-button>
           </article>
         </section>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .page {
-      padding: 20px 20px 88px;
-    }
-    .welcome,
-    .stat,
-    .quick-card {
-      padding: 20px;
-    }
-    .welcome {
-      margin-bottom: 20px;
-    }
-    .eyebrow {
-      color: #60a5fa;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 12px;
-    }
-    .stat span {
-      display: block;
-      font-size: 2rem;
-      font-weight: 700;
-    }
-    .quick-links {
-      margin-top: 20px;
-    }
-  `]
+  `
 })
 export class HomePage {
   readonly userName = computed(() => this.auth.currentUser()?.name ?? 'Jugador');
@@ -102,3 +74,4 @@ export class HomePage {
     private readonly chat: ChatService
   ) {}
 }
+

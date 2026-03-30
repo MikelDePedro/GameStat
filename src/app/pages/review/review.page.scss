@@ -1,0 +1,24 @@
+/* Review page */
+.page {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.form-card,
+.review-list {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+}
+.review-list {
+  margin-top: 20px;
+}
+.range-wrap {
+  padding: 12px 8px;
+}
+.review-item {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.75);
+}

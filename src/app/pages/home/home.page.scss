@@ -1,0 +1,80 @@
+.page {
+  padding: 20px;
+}
+.welcome,
+.stat,
+.quick-card {
+  padding: 20px;
+}
+.welcome {
+  margin-bottom: 20px;
+}
+.eyebrow {
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+.stat span {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.quick-links {
+  margin-top: 20px;
+}
+
+/* Estilos para los botones de acción */
+::ng-deep .action-button {
+  --background: #60a5fa !important;
+  --background-hover: #3b82f6 !important;
+  --background-activated: #1e40af !important;
+  --color: #ffffff !important;
+  --padding-start: 16px !important;
+  --padding-end: 16px !important;
+  --padding-top: 12px !important;
+  --padding-bottom: 12px !important;
+  --border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  margin-top: 12px !important;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+::ng-deep .action-button:hover {
+  --background: #3b82f6 !important;
+  box-shadow: 0 8px 16px rgba(96, 165, 250, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+::ng-deep .action-button:active {
+  --background: #1e40af !important;
+  transform: translateY(0) !important;
+}
+
+/* Alternativa si el selector anterior no funciona */
+::ng-deep ion-button[color="primary"] {
+  --background: #60a5fa !important;
+  --background-hover: #3b82f6 !important;
+  --background-activated: #1e40af !important;
+  --color: #ffffff !important;
+}
+
+/* Solución adicional para penetrar encapsulación */
+::ng-deep ion-button[expand="block"] {
+  display: block !important;
+  width: 100% !important;
+}
+
+::ng-deep .quick-card ion-button {
+  --background: #60a5fa !important;
+  --color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+::ng-deep ion-button[fill="outline"]:hover {
+  --background: rgba(96, 165, 250, 0.1) !important;
+}

@@ -49,8 +49,10 @@ export class SocialService {
   }
 
   likePost(postId: string): void {
-    this.posts.update((items) =>
-      items.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post))
+    this.posts.update((posts) =>
+      posts.map((post) =>
+        post.id === postId ? { ...post, likes: post.likes + 1 } : post
+      )
     );
   }
 }

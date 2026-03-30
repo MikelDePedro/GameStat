@@ -1,0 +1,40 @@
+/* Social page */
+.page {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.post-box,
+.feed-list,
+.chat-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+}
+.feed-list,
+.chat-card {
+  margin-top: 20px;
+}
+.messages {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+.message {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.75);
+}
+.message p,
+.message span {
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+.message span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.feed-list .post {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 10px 0;
+}
