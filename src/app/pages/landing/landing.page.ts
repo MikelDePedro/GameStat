@@ -11,6 +11,7 @@ import {
 @Component({
   standalone: true,
   imports: [RouterLink, IonButton, IonContent, IonHeader, IonTitle, IonToolbar],
+  styleUrls: ['./landing.page.scss'],
   template: `
     <ion-header translucent="true">
       <ion-toolbar>
@@ -50,41 +51,6 @@ import {
         </section>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .landing {
-      padding: 24px 20px 40px;
-    }
-    .hero {
-      padding: 28px;
-      margin-top: 24px;
-    }
-    .eyebrow {
-      color: #31c48d;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 12px;
-    }
-    h1 {
-      font-size: clamp(2rem, 5vw, 4rem);
-      margin: 0 0 12px;
-      line-height: 1.05;
-    }
-    p {
-      color: #cbd5e1;
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-    .feature-grid {
-      margin-top: 20px;
-    }
-    .feature {
-      padding: 20px;
-    }
-  `]
+  `
 })
 export class LandingPage {}

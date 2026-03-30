@@ -13,7 +13,7 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone';
 
-import { AuthService } from '../core/services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -21,21 +21,13 @@ import { AuthService } from '../core/services/auth.service';
     FormsModule,
     IonButton,
     IonContent,
-    IonHeader,
     IonInput,
     IonItem,
     IonLabel,
-    IonText,
-    IonTitle,
-    IonToolbar
+    IonText
   ],
+  styleUrls: ['./profile.page.scss'],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Perfil</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content>
       <div class="page-shell page">
         <section class="surface-card profile-card">
@@ -61,34 +53,11 @@ import { AuthService } from '../core/services/auth.service';
           </ion-item>
 
           <ion-button expand="block" (click)="save()">Guardar cambios</ion-button>
-          <ion-button expand="block" fill="outline" color="medium" (click)="logout()">Cerrar sesion</ion-button>
+          <ion-button expand="block" fill="outline" color="danger" (click)="logout()">Cerrar sesion</ion-button>
         </section>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .page {
-      padding: 20px 20px 88px;
-    }
-    .profile-card,
-    .edit-card {
-      padding: 20px;
-    }
-    .edit-card {
-      margin-top: 20px;
-    }
-    .avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      background: linear-gradient(135deg, #31c48d, #60a5fa);
-      color: #0f172a;
-      margin-bottom: 16px;
-    }
-  `]
+  `
 })
 export class ProfilePage {
   profile = {

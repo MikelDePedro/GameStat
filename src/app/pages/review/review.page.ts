@@ -15,8 +15,8 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone';
 
-import { AuthService } from '../core/services/auth.service';
-import { SocialService } from '../core/services/social.service';
+import { AuthService } from '../../core/services/auth.service';
+import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
@@ -25,23 +25,15 @@ import { SocialService } from '../core/services/social.service';
     FormsModule,
     IonButton,
     IonContent,
-    IonHeader,
     IonInput,
     IonItem,
     IonLabel,
     IonList,
     IonRange,
-    IonText,
-    IonTitle,
-    IonToolbar
+    IonText
   ],
+  styleUrls: ['./review.page.scss'],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Review</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content>
       <div class="page-shell page">
         <section class="surface-card form-card">
@@ -73,22 +65,7 @@ import { SocialService } from '../core/services/social.service';
         </ion-list>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .page {
-      padding: 20px 20px 88px;
-    }
-    .form-card,
-    .review-list {
-      padding: 20px;
-    }
-    .review-list {
-      margin-top: 20px;
-    }
-    .range-wrap {
-      padding: 12px 8px;
-    }
-  `]
+  `
 })
 export class ReviewPage {
   form = {

@@ -14,7 +14,7 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone';
 
-import { AuthService } from '../core/services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -32,6 +32,7 @@ import { AuthService } from '../core/services/auth.service';
     IonTitle,
     IonToolbar
   ],
+  styleUrls: ['./login.page.scss'],
   template: `
     <ion-header>
       <ion-toolbar>
@@ -59,23 +60,7 @@ import { AuthService } from '../core/services/auth.service';
         </section>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .auth-page {
-      display: grid;
-      place-items: center;
-      min-height: 100%;
-      padding: 24px;
-    }
-    .auth-card {
-      width: min(100%, 420px);
-      padding: 24px;
-    }
-    .muted {
-      margin-top: 16px;
-      color: #94a3b8;
-    }
-  `]
+  `
 })
 export class LoginPage {
   email = 'demo@gamestat.app';

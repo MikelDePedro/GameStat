@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import {
   IonIcon,
   IonLabel,
@@ -13,25 +12,26 @@ import { chatbubblesOutline, homeOutline, personCircleOutline, starOutline } fro
 
 @Component({
   standalone: true,
-  imports: [RouterLink, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs],
+  imports: [IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs],
+  styleUrls: ['./tabs.page.scss'],
   template: `
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
 
-      <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="home" [routerLink]="['/tabs/home']">
+      <ion-tab-bar slot="top">
+        <ion-tab-button tab="home" href="/tabs/home">
           <ion-icon name="home-outline"></ion-icon>
           <ion-label>Home</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="review" [routerLink]="['/tabs/review']">
+        <ion-tab-button tab="review" href="/tabs/review">
           <ion-icon name="star-outline"></ion-icon>
           <ion-label>Review</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="social" [routerLink]="['/tabs/social']">
+        <ion-tab-button tab="social" href="/tabs/social">
           <ion-icon name="chatbubbles-outline"></ion-icon>
           <ion-label>Social</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="profile" [routerLink]="['/tabs/profile']">
+        <ion-tab-button tab="profile" href="/tabs/profile">
           <ion-icon name="person-circle-outline"></ion-icon>
           <ion-label>Perfil</ion-label>
         </ion-tab-button>

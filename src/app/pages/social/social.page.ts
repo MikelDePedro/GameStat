@@ -15,9 +15,9 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone';
 
-import { AuthService } from '../core/services/auth.service';
-import { ChatService } from '../core/services/chat.service';
-import { SocialService } from '../core/services/social.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ChatService } from '../../core/services/chat.service';
+import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
@@ -26,23 +26,15 @@ import { SocialService } from '../core/services/social.service';
     FormsModule,
     IonButton,
     IonContent,
-    IonHeader,
     IonInput,
     IonItem,
     IonLabel,
     IonList,
     IonSegment,
-    IonSegmentButton,
-    IonTitle,
-    IonToolbar
+    IonSegmentButton
   ],
+  styleUrls: ['./social.page.scss'],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Social</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content>
       <div class="page-shell page">
         <section class="surface-card post-box">
@@ -61,7 +53,7 @@ import { SocialService } from '../core/services/social.service';
               <p>{{ post.content }}</p>
               <p>{{ post.createdAt }} - {{ post.likes }} likes</p>
             </ion-label>
-            <ion-button fill="clear" (click)="social.likePost(post.id)">Like</ion-button>
+            <ion-button fill="outline" (click)="likePost(post.id)">Like</ion-button>
           </ion-item>
         </ion-list>
 
@@ -89,40 +81,7 @@ import { SocialService } from '../core/services/social.service';
         </section>
       </div>
     </ion-content>
-  `,
-  styles: [`
-    .page {
-      padding: 20px 20px 88px;
-    }
-    .post-box,
-    .feed-list,
-    .chat-card {
-      padding: 20px;
-    }
-    .feed-list,
-    .chat-card {
-      margin-top: 20px;
-    }
-    .messages {
-      display: grid;
-      gap: 12px;
-      margin: 18px 0;
-    }
-    .message {
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(30, 41, 59, 0.75);
-    }
-    .message p,
-    .message span {
-      margin: 6px 0 0;
-      color: #cbd5e1;
-    }
-    .message span {
-      font-size: 12px;
-      color: #94a3b8;
-    }
-  `]
+  `
 })
 export class SocialPage {
   postContent = '';
@@ -154,6 +113,10 @@ export class SocialPage {
     this.postContent = '';
   }
 
+  likePost(postId: string): void {
+    this.social.likePost(postId);
+  }
+
   sendMessage(): void {
     const user = this.auth.currentUser();
     if (!user || !this.selectedRoomId) {
@@ -165,6 +128,6 @@ export class SocialPage {
   }
 
   currentMessages() {
-    return this.chat.messages().filter((item) => item.roomId === this.selectedRoomId);
+    return this.chat.messages().filter((item: any) => item.roomId === this.selectedRoomId);
   }
 }

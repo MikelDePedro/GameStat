@@ -1,12 +1,12 @@
 # TODO GameStat (Ionic + Angular)
 
 ## 1. Inicio y configuración local
-- [ ] Ejecutar:
+- [x] Ejecutar:
   - `npm install`
   - opcional: `npm install -g @ionic/cli`
 - [ ] Verificar ejecución local:
   - `npm start` o `ionic serve`
-- [ ] Añadir `.gitignore` si falta (node_modules, env, etc.).
+- [x] Añadir `.gitignore` si falta (node_modules, env, etc.).
 - [x] Crear `README.md` instrucciones de arranque + demo user.
 
 ## 2. Arquitectura de datos y backend (Supabase recomendado)
