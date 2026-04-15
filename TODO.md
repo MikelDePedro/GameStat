@@ -24,12 +24,15 @@
 - [x] `auth.guard.ts` y rutas protegidas.
 
 ## 4. UI y navegación
-- [x] `landing.page.ts` con información y CTA.
-- [x] `tabs.page.ts` con rutas: `home`, `profile`, `review`, `social`.
-- [x] `home.page.ts` (panel con métricas y atajos).
-- [x] `profile.page.ts` (datos usuario, edición de perfil).
-- [x] `review.page.ts` (crear+listar reseñas; edición/elim pendiente en UI).
-- [x] `social.page.ts` (feed, posts, like).
+- [] `landing.page.ts` con información y CTA.
+- [] `tabs.page.ts` con rutas: `home`, `profile`, `review`, `social`.
+- [] `home.page.ts` (panel con métricas y atajos).
+- [] `profile.page.ts` (datos usuario, edición de perfil).
+- [] `review.page.ts` (crear+listar reseñas; edición/elim pendiente en UI).
+- [] `social.page.ts` (feed, posts, like).
+Notas: Hay muchas que no funcionan, como la navegación entre páginas en algunos botones. Los estilos están fatal. Al meterse en la aplicación la página que tendría que salir primero es la landing page. Esa página habrá que hacerla bonita con imagenes de juegos en grid y con explicaciones de la aplicacion para atraer. 
+
+Las páginas las organizaría como se hace en Instagram: Feed (donde salen todas las reviews), chat (estilo WhatsApp), Buscar (para busscar el juego que queramos y se vean todas sus reviews, valoraciones e información) y Perfil.
 
 ## 5. Chat personal y grupal
 - [x] Modelos de sala y mensajes en `models.ts`.
