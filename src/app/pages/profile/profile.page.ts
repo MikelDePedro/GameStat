@@ -1,16 +1,15 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonInput,
   IonItem,
   IonLabel,
   IonText,
-  IonTitle,
-  IonToolbar
+  IonToast
 } from '@ionic/angular/standalone';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -18,13 +17,15 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     IonButton,
     IonContent,
     IonInput,
     IonItem,
     IonLabel,
-    IonText
+    IonText,
+    IonToast
   ],
   styleUrls: ['./profile.page.scss'],
   template: `
@@ -52,10 +53,23 @@ import { AuthService } from '../../core/services/auth.service';
             <ion-input [(ngModel)]="profile.bio"></ion-input>
           </ion-item>
 
-          <ion-button expand="block" (click)="save()">Guardar cambios</ion-button>
-          <ion-button expand="block" fill="outline" color="danger" (click)="logout()">Cerrar sesion</ion-button>
+          <ion-button expand="block" [disabled]="loading" (click)="save()">
+            {{ loading ? 'Guardando...' : 'Guardar cambios' }}
+          </ion-button>
+          <ion-button expand="block" fill="outline" color="danger" [disabled]="loading" (click)="logout()">
+            Cerrar sesion
+          </ion-button>
+          <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
         </section>
       </div>
+
+      <ion-toast
+        [isOpen]="showSavedToast"
+        message="Perfil actualizado en Supabase."
+        color="success"
+        duration="1800"
+        (didDismiss)="showSavedToast = false">
+      </ion-toast>
     </ion-content>
   `
 })
@@ -68,14 +82,24 @@ export class ProfilePage {
     bio: '',
     avatar: ''
   };
+  loading = false;
+  error = '';
+  showSavedToast = false;
 
   constructor(private readonly auth: AuthService, private readonly router: Router) {
-    this.profile = {
-      ...(this.auth.currentUser() ?? this.profile)
-    };
+    effect(() => {
+      const currentUser = this.auth.currentUser();
+      if (!currentUser) {
+        return;
+      }
+
+      this.profile = { ...currentUser };
+    });
   }
 
-  save(): void {
+  async save(): Promise<void> {
+    this.error = '';
+    this.loading = true;
     this.profile.avatar = this.profile.name
       .split(' ')
       .filter(Boolean)
@@ -83,11 +107,27 @@ export class ProfilePage {
       .map((item) => item[0]?.toUpperCase() ?? '')
       .join('');
 
-    this.auth.updateProfile(this.profile);
+    try {
+      await this.auth.updateProfile(this.profile);
+      this.showSavedToast = true;
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : 'No se pudo guardar el perfil.';
+    } finally {
+      this.loading = false;
+    }
   }
 
-  logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/login');
+  async logout(): Promise<void> {
+    this.error = '';
+    this.loading = true;
+
+    try {
+      await this.auth.logout();
+      await this.router.navigateByUrl('/login');
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : 'No se pudo cerrar sesion.';
+    } finally {
+      this.loading = false;
+    }
   }
 }
