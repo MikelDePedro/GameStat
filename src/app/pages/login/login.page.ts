@@ -44,14 +44,21 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="page-shell auth-page">
         <section class="surface-card auth-card">
           <h1>Accede a tu cuenta</h1>
-          <p>Usuario demo disponible: <strong>demo&#64;gamestat.app</strong></p>
+          <p>Tu acceso ahora usa autenticacion real de Supabase.</p>
 
           <ion-item>
             <ion-label position="stacked">Email</ion-label>
-            <ion-input [(ngModel)]="email" type="email" placeholder="demo&#64;gamestat.app"></ion-input>
+            <ion-input [(ngModel)]="email" type="email" placeholder="tuemail@dominio.com"></ion-input>
           </ion-item>
 
-          <ion-button expand="block" (click)="submit()">Entrar</ion-button>
+          <ion-item>
+            <ion-label position="stacked">Contrasena</ion-label>
+            <ion-input [(ngModel)]="password" type="password" placeholder="Minimo 6 caracteres"></ion-input>
+          </ion-item>
+
+          <ion-button expand="block" [disabled]="loading" (click)="submit()">
+            {{ loading ? 'Entrando...' : 'Entrar' }}
+          </ion-button>
           <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
 
           <p class="muted">
@@ -63,20 +70,24 @@ import { AuthService } from '../../core/services/auth.service';
   `
 })
 export class LoginPage {
-  email = 'demo@gamestat.app';
+  email = '';
+  password = '';
   error = '';
+  loading = false;
 
   constructor(private readonly auth: AuthService, private readonly router: Router) {}
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.error = '';
-    const ok = this.auth.login(this.email);
+    this.loading = true;
 
-    if (!ok) {
-      this.error = 'No existe un usuario con ese email.';
-      return;
+    try {
+      await this.auth.login(this.email, this.password);
+      await this.router.navigateByUrl('/tabs/home');
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : 'No se pudo iniciar sesion.';
+    } finally {
+      this.loading = false;
     }
-
-    void this.router.navigateByUrl('/tabs/home');
   }
 }
