@@ -34,24 +34,36 @@ import { AuthService } from '../../core/services/auth.service';
   ],
   styleUrls: ['./login.page.scss'],
   template: `
-    <ion-header>
+    <ion-header translucent="true">
       <ion-toolbar>
-        <ion-title>Login</ion-title>
+        <ion-title>GameStat</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
-      <div class="page-shell auth-page">
-        <section class="surface-card auth-card">
-          <h1>Accede a tu cuenta</h1>
-          <p>Tu acceso ahora usa autenticacion real de Supabase.</p>
+    <ion-content [fullscreen]="true">
+      <div class="page-shell auth-layout">
+        <section class="surface-card auth-hero">
+          <p class="eyebrow">Comunidad, metricas y chat gamer</p>
+          <h1>Vuelve a GameStat</h1>
+          <p>
+            Inicia sesion para continuar con tus reviews, actividad social y conversaciones activas.
+          </p>
+          <div class="hero-actions">
+            <ion-button routerLink="/landing" fill="clear">Ir a landing</ion-button>
+            <ion-button routerLink="/register" fill="outline">Crear cuenta</ion-button>
+          </div>
+        </section>
 
-          <ion-item>
+        <section class="surface-card auth-card">
+          <h2>Iniciar sesion</h2>
+          <p class="helper">Accede con tu cuenta para entrar a tus tabs.</p>
+
+          <ion-item class="form-item">
             <ion-label position="stacked">Email</ion-label>
             <ion-input [(ngModel)]="email" type="email" placeholder="tuemail@dominio.com"></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="form-item">
             <ion-label position="stacked">Contrasena</ion-label>
             <ion-input [(ngModel)]="password" type="password" placeholder="Minimo 6 caracteres"></ion-input>
           </ion-item>
@@ -59,11 +71,12 @@ import { AuthService } from '../../core/services/auth.service';
           <ion-button expand="block" [disabled]="loading" (click)="submit()">
             {{ loading ? 'Entrando...' : 'Entrar' }}
           </ion-button>
-          <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
 
-          <p class="muted">
-            No tienes cuenta? <a routerLink="/register">Registrate</a>
-          </p>
+          <ion-text color="danger" *ngIf="error">
+            <p class="feedback">{{ error }}</p>
+          </ion-text>
+
+          <p class="muted">No tienes cuenta? <a routerLink="/register">Registrate</a></p>
         </section>
       </div>
     </ion-content>

@@ -1,4 +1,5 @@
 import { importProvidersFrom } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
@@ -9,6 +10,7 @@ import { appRoutes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideHttpClient(),
     provideAnimations(),
     provideRouter(appRoutes, withComponentInputBinding()),
     importProvidersFrom(IonicModule.forRoot())

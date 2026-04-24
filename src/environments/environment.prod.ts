@@ -1,5 +1,11 @@
 export const environment = {
   production: true,
+  rawg: {
+    apiUrl: 'https://api.rawg.io/api',
+    apiKey: '9034171224b8443b9d549453cf60d4ae',
+    pageSize: 20,
+    syncWithSupabase: false
+  },
   supabase: {
     url: 'https://oukbhypvmtqmgnzcatfk.supabase.co',
     anonKey:

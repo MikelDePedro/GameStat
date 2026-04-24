@@ -3,6 +3,12 @@ import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
 import { environment } from '../../../environments/environment';
 
+const noOpLock = async <T>(
+  _name: string,
+  _acquireTimeout: number,
+  fn: () => Promise<T>
+): Promise<T> => fn();
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   readonly url = environment.supabase.url.trim();
@@ -14,7 +20,8 @@ export class SupabaseService {
           auth: {
             persistSession: true,
             autoRefreshToken: true,
-            detectSessionInUrl: true
+            detectSessionInUrl: true,
+            lock: noOpLock
           }
         })
       : null;

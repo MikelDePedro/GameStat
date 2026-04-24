@@ -34,6 +34,10 @@ export const appRoutes: Routes = [
         loadComponent: () => import('./pages/review/review.page').then((m) => m.ReviewPage)
       },
       {
+        path: 'games',
+        loadComponent: () => import('./pages/games/games.page').then((m) => m.GamesPage)
+      },
+      {
         path: 'social',
         loadComponent: () => import('./pages/social/social.page').then((m) => m.SocialPage)
       },
