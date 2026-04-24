@@ -1,21 +1,95 @@
-/* Register page */
-.auth-page {
+.auth-layout {
+  padding: 24px 20px 40px;
   display: grid;
-  place-items: center;
-  min-height: 100vh;
-  padding: 24px;
-  background: radial-gradient(circle at top, rgba(96, 165, 250, 0.15), transparent 70%);
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
+
+.auth-hero,
 .auth-card {
-  width: min(100%, 460px);
-  padding: 24px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.9);
+  border-radius: 12px;
 }
+
+.auth-hero {
+  padding: 28px;
+  margin-top: 24px;
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.eyebrow {
+  color: #31c48d;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+
+.auth-hero h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  margin: 0 0 12px;
+  line-height: 1.08;
+}
+
+.auth-hero p,
+.helper,
 .muted {
-  margin-top: 16px;
-  color: #94a3b8;
+  color: #cbd5e1;
 }
-.auth-card ion-button {
-  margin-top: 16px;
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.auth-card {
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.auth-card h2 {
+  margin: 0 0 6px;
+}
+
+.helper {
+  margin: 0 0 16px;
+}
+
+.form-item {
+  --background: rgba(15, 23, 42, 0.55);
+  --border-color: rgba(148, 163, 184, 0.16);
+  --highlight-color-focused: #31c48d;
+  --padding-start: 10px;
+  --inner-padding-end: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.auth-card ion-button[expand='block'] {
+  margin-top: 14px;
+}
+
+.feedback {
+  margin: 12px 0 0;
+}
+
+.muted {
+  margin: 16px 0 0;
+}
+
+.muted a {
+  color: #93c5fd;
+}
+
+@media (min-width: 920px) {
+  .auth-layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: start;
+  }
+
+  .auth-card {
+    margin-top: 24px;
+  }
 }

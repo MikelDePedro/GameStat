@@ -8,7 +8,13 @@ import {
   IonTabs
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { chatbubblesOutline, homeOutline, personCircleOutline, starOutline } from 'ionicons/icons';
+import {
+  chatbubblesOutline,
+  gameControllerOutline,
+  homeOutline,
+  personCircleOutline,
+  starOutline
+} from 'ionicons/icons';
 
 @Component({
   standalone: true,
@@ -27,6 +33,10 @@ import { chatbubblesOutline, homeOutline, personCircleOutline, starOutline } fro
           <ion-icon name="star-outline"></ion-icon>
           <ion-label>Review</ion-label>
         </ion-tab-button>
+        <ion-tab-button tab="games" href="/tabs/games">
+          <ion-icon name="game-controller-outline"></ion-icon>
+          <ion-label>Juegos</ion-label>
+        </ion-tab-button>
         <ion-tab-button tab="social" href="/tabs/social">
           <ion-icon name="chatbubbles-outline"></ion-icon>
           <ion-label>Social</ion-label>
@@ -44,6 +54,7 @@ export class TabsPage {
     addIcons({
       homeOutline,
       starOutline,
+      gameControllerOutline,
       chatbubblesOutline,
       personCircleOutline
     });

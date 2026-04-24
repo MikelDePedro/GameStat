@@ -1,0 +1,107 @@
+<ion-content class="games-content" [scrollY]="true">
+  <div class="page-shell page">
+    <section class="surface-card search-card">
+      <h1>Catalogo RAWG</h1>
+      <p>Explora miles de videojuegos, busca por nombre y guarda favoritos.</p>
+
+      <ion-searchbar
+        [value]="searchTerm"
+        placeholder="Buscar juegos"
+        animated="true"
+        debounce="0"
+        (ionInput)="onSearchInput($event)">
+      </ion-searchbar>
+
+      <ion-text color="danger" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
+      </ion-text>
+
+      <ion-button *ngIf="errorMessage" fill="outline" size="small" (click)="retry()">
+        Reintentar
+      </ion-button>
+
+      <ion-text color="warning" *ngIf="favoritesError">
+        <p>{{ favoritesError }}</p>
+      </ion-text>
+
+      <ion-text color="medium" *ngIf="!supabaseSyncEnabled">
+        <p>Favoritos en Supabase desactivados temporalmente.</p>
+      </ion-text>
+    </section>
+
+    <section class="surface-card loading-state" *ngIf="isLoading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando videojuegos...</p>
+    </section>
+
+    <ion-list class="surface-card games-list" *ngIf="!isLoading && games.length">
+      <ion-item class="game-item" lines="full" *ngFor="let game of games; trackBy: trackByGameId">
+        <ion-thumbnail slot="start" class="cover">
+          <img [src]="game.background_image || fallbackCover" [alt]="game.name" loading="lazy" />
+        </ion-thumbnail>
+
+        <ion-label>
+          <h2>{{ game.name }}</h2>
+          <p class="meta-line">
+            <ion-icon name="star-outline"></ion-icon>
+            {{ game.rating | number: '1.1-1' }}
+          </p>
+          <p class="meta-line">
+            <ion-icon name="calendar-outline"></ion-icon>
+            {{ game.released || 'Sin fecha' }}
+          </p>
+        </ion-label>
+
+        <div class="actions" slot="end">
+          <ion-button fill="clear" size="small" (click)="loadGameDetails(game.id)">
+            <ion-icon name="information-circle-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            size="small"
+            [disabled]="isFavoriteLoading(game.id)"
+            (click)="toggleFavorite(game)">
+            <ion-icon [name]="isFavorite(game.id) ? 'heart' : 'heart-outline'" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-item>
+    </ion-list>
+
+    <section class="surface-card empty-state" *ngIf="!isLoading && !errorMessage && !games.length">
+      <p>No hay resultados para la busqueda actual.</p>
+    </section>
+
+    <section class="surface-card details-card" *ngIf="detailsLoading || selectedGameDetails || detailsError">
+      <div class="details-header">
+        <h2>Detalle del juego</h2>
+        <ion-button fill="clear" size="small" (click)="closeDetails()">Cerrar</ion-button>
+      </div>
+
+      <div class="details-loading" *ngIf="detailsLoading">
+        <ion-spinner name="dots"></ion-spinner>
+      </div>
+
+      <ion-text color="danger" *ngIf="detailsError && !detailsLoading">
+        <p>{{ detailsError }}</p>
+      </ion-text>
+
+      <div class="details-content" *ngIf="selectedGameDetails && !detailsLoading">
+        <h3>{{ selectedGameDetails.name }}</h3>
+        <p>{{ selectedGameDetails.description_raw || 'Sin descripcion.' }}</p>
+        <p><strong>Playtime:</strong> {{ selectedGameDetails.playtime }} h</p>
+      </div>
+    </section>
+
+  </div>
+
+  <ion-infinite-scroll
+    threshold="120px"
+    [disabled]="!hasNextPage || isLoading"
+    (ionInfinite)="loadMore($event)">
+    <ion-infinite-scroll-content
+      loadingSpinner="crescent"
+      loadingText="Cargando mas juegos...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>
