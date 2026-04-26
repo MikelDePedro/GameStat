@@ -32,18 +32,24 @@
   color: #cbd5e1;
 }
 
-.games-list {
-  overflow: hidden;
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.game-item {
-  --min-height: 110px;
+.game-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 .cover {
-  width: 96px;
-  height: 72px;
-  border-radius: 10px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px 14px 0 0;
   overflow: hidden;
 }
 
@@ -51,6 +57,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.game-body {
+  padding: 16px 16px 8px;
+}
+
+.game-body h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  line-height: 1.35;
 }
 
 .meta-line {
@@ -63,38 +79,32 @@
 
 .actions {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 0 12px 12px;
+  margin-top: auto;
 }
 
 .loading-state,
-.empty-state,
-.details-loading {
+.empty-state {
   display: grid;
   place-items: center;
   text-align: center;
   gap: 8px;
 }
 
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.details-content h3 {
-  margin: 0 0 10px;
-}
-
-.details-content p {
-  color: #cbd5e1;
-  line-height: 1.45;
+@media (max-width: 1024px) {
+  .games-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
   .cover {
-    width: 72px;
-    height: 56px;
+    border-radius: 14px 14px 0 0;
   }
 }

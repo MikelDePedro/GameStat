@@ -4,15 +4,12 @@ import { FormsModule } from '@angular/forms';
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonInput,
   IonItem,
   IonLabel,
   IonList,
   IonSegment,
-  IonSegmentButton,
-  IonTitle,
-  IonToolbar
+  IonSegmentButton
 } from '@ionic/angular/standalone';
 
 import { AuthService } from '../../core/services/auth.service';

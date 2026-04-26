@@ -1,29 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import {
   IonButton,
   IonContent,
   IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonItem,
-  IonLabel,
-  IonList,
   IonSearchbar,
   IonSpinner,
-  IonText,
-  IonThumbnail
+  IonText
 } from '@ionic/angular/standalone';
 import { InfiniteScrollCustomEvent, SearchbarCustomEvent } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import {
-  calendarOutline,
-  heart,
-  heartOutline,
-  informationCircleOutline,
-  starOutline
-} from 'ionicons/icons';
+import { calendarOutline, heart, heartOutline, starOutline } from 'ionicons/icons';
 import {
   Subject,
   catchError,
@@ -36,7 +27,7 @@ import {
   tap
 } from 'rxjs';
 
-import { RawgGame, RawgGameDetails, RawgGamesPage } from '../../core/models/rawg.models';
+import { RawgGame, RawgGamesPage } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
 import { GamesService } from '../../core/services/games.service';
 
@@ -49,13 +40,9 @@ import { GamesService } from '../../core/services/games.service';
     IonIcon,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
-    IonItem,
-    IonLabel,
-    IonList,
     IonSearchbar,
     IonSpinner,
-    IonText,
-    IonThumbnail
+    IonText
   ],
   styleUrls: ['./games.page.scss'],
   templateUrl: './games.page.html'
@@ -76,22 +63,18 @@ export class GamesPage implements OnInit {
   currentPage = 1;
   errorMessage = '';
 
-  detailsLoading = false;
-  detailsError = '';
-  selectedGameDetails: RawgGameDetails | null = null;
-
   favoritesError = '';
   favoriteIds = new Set<number>();
   private favoriteLoadingIds = new Set<number>();
 
   constructor(
     private readonly gamesService: GamesService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {
     addIcons({
       starOutline,
       calendarOutline,
-      informationCircleOutline,
       heart,
       heartOutline
     });
@@ -109,6 +92,10 @@ export class GamesPage implements OnInit {
 
   onSearchInput(event: SearchbarCustomEvent): void {
     this.searchTerms$.next(event.detail.value ?? '');
+  }
+
+  openGame(gameId: number): void {
+    void this.router.navigate(['/tabs/game', gameId]);
   }
 
   loadMore(event: InfiniteScrollCustomEvent): void {
@@ -167,28 +154,6 @@ export class GamesPage implements OnInit {
       });
   }
 
-  loadGameDetails(gameId: number): void {
-    this.detailsError = '';
-    this.detailsLoading = true;
-
-    this.gamesService
-      .getGameDetails(gameId)
-      .pipe(
-        finalize(() => {
-          this.detailsLoading = false;
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (details) => {
-          this.selectedGameDetails = details;
-        },
-        error: (error: Error) => {
-          this.detailsError = error.message;
-        }
-      });
-  }
-
   toggleFavorite(game: RawgGame): void {
     if (!this.supabaseSyncEnabled) {
       this.favoritesError =
@@ -242,11 +207,6 @@ export class GamesPage implements OnInit {
     return this.favoriteLoadingIds.has(gameId);
   }
 
-  closeDetails(): void {
-    this.selectedGameDetails = null;
-    this.detailsError = '';
-  }
-
   trackByGameId(_: number, game: RawgGame): number {
     return game.id;
   }
@@ -262,7 +222,6 @@ export class GamesPage implements OnInit {
           this.currentPage = 1;
           this.hasNextPage = true;
           this.errorMessage = '';
-          this.selectedGameDetails = null;
           this.games = [];
           this.isLoading = true;
         }),
