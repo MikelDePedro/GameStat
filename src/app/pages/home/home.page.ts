@@ -13,7 +13,15 @@ import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, IonButton, IonContent, IonSpinner, IonText, RouterLink, RouterLinkActive],
+  imports: [
+    CommonModule,
+    IonButton,
+    IonContent,
+    IonSpinner,
+    IonText,
+    RouterLink,
+    RouterLinkActive
+  ],
   styleUrls: ['./home.page.scss'],
   template: `
     <ion-content>

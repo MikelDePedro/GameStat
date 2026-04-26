@@ -1,3 +1,11 @@
+::ng-deep ion-tabs > ion-router-outlet {
+  pointer-events: none !important;
+}
+
+::ng-deep ion-tabs > ion-router-outlet > * {
+  pointer-events: auto !important;
+}
+
 ::ng-deep ion-tab-bar {
   display: flex !important;
   justify-content: space-around !important;
@@ -63,7 +71,6 @@
   transform: scale(0.95) !important;
 }
 
-/* Estado cuando el tab está seleccionado */
 ::ng-deep ion-tab-button.ion-tab-button--selected {
   --color: #60a5fa !important;
   background: rgba(96, 165, 250, 0.08) !important;

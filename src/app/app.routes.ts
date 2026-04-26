@@ -38,6 +38,10 @@ export const appRoutes: Routes = [
         loadComponent: () => import('./pages/games/games.page').then((m) => m.GamesPage)
       },
       {
+        path: 'game/:id',
+        loadComponent: () => import('./pages/game/game.page').then((m) => m.GamePage)
+      },
+      {
         path: 'social',
         loadComponent: () => import('./pages/social/social.page').then((m) => m.SocialPage)
       },
