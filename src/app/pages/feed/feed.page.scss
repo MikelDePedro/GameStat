@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+ion-content {
+  --overflow: hidden;
+}
+
+.page {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.feed-section,
+.post-box {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.feed-section {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.feed-scroll {
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+  padding-right: 6px;
+}
+
+.feed-scroll::before,
+.feed-scroll::after {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  content: "";
+}
+
+.feed-scroll::before {
+  bottom: -1px;
+}
+
+.feed-scroll::after {
+  top: -1px;
+}
+
+.feed-list {
+  background: transparent;
+}
+
+.post-box {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+ion-item {
+  --background: transparent;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .feed-section,
+  .post-box {
+    padding: 14px;
+  }
+}

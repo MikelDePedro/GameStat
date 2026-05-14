@@ -33,22 +33,40 @@ import { SocialService } from '../../core/services/social.service';
   ],
   styleUrls: ['./review.page.scss'],
   template: `
-    <ion-content>
+    <ion-content [scrollY]="false">
       <div class="page-shell page">
+        <section class="surface-card review-section">
+          <div class="review-scroll">
+            <ion-list class="review-list">
+              <ion-item lines="none" *ngFor="let review of social.reviews()">
+                <ion-label>
+                  <h2>{{ review.game }} - {{ review.rating }}/10</h2>
+                  <h3>{{ review.title }}</h3>
+                  <p *ngIf="review.subtitle">{{ review.subtitle }}</p>
+                  <p>{{ review.comment }}</p>
+                  <p>{{ review.author }} - {{ review.createdAt }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </div>
+        </section>
+
         <section class="surface-card form-card">
           <h1>Nueva review</h1>
-          <ion-item>
-            <ion-label position="stacked">Juego</ion-label>
-            <ion-input [(ngModel)]="form.game"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Titulo</ion-label>
-            <ion-input [(ngModel)]="form.title" placeholder="Tu titular para la review"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Subtitulo</ion-label>
-            <ion-input [(ngModel)]="form.subtitle" placeholder="Resumen corto de tu opinion"></ion-input>
-          </ion-item>
+          <div class="review-fields">
+            <ion-item>
+              <ion-label position="stacked">Juego</ion-label>
+              <ion-input [(ngModel)]="form.game"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Titulo</ion-label>
+              <ion-input [(ngModel)]="form.title" placeholder="Tu titular para la review"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Subtitulo</ion-label>
+              <ion-input [(ngModel)]="form.subtitle" placeholder="Resumen corto de tu opinion"></ion-input>
+            </ion-item>
+          </div>
           <ion-item>
             <ion-label position="stacked">Comentario</ion-label>
             <ion-textarea [(ngModel)]="form.comment" autoGrow="true"></ion-textarea>
@@ -66,18 +84,6 @@ import { SocialService } from '../../core/services/social.service';
             <p>{{ errorMessage }}</p>
           </ion-text>
         </section>
-
-        <ion-list class="surface-card review-list">
-          <ion-item lines="none" *ngFor="let review of social.reviews()">
-            <ion-label>
-              <h2>{{ review.game }} - {{ review.rating }}/10</h2>
-              <h3>{{ review.title }}</h3>
-              <p *ngIf="review.subtitle">{{ review.subtitle }}</p>
-              <p>{{ review.comment }}</p>
-              <p>{{ review.author }} - {{ review.createdAt }}</p>
-            </ion-label>
-          </ion-item>
-        </ion-list>
       </div>
     </ion-content>
   `

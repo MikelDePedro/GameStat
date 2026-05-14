@@ -25,6 +25,7 @@ export interface SocialPost {
   content: string;
   likes: number;
   createdAt: string;
+  createdAtTimestamp: number;
 }
 
 export interface ChatMessage {

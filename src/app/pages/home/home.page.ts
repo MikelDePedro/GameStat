@@ -1,15 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { IonButton, IonContent, IonSpinner, IonText } from '@ionic/angular/standalone';
+import {
+  IonButton,
+  IonContent,
+  IonSpinner,
+  IonText
+} from '@ionic/angular/standalone';
 import { finalize } from 'rxjs';
 
 import { RawgGame } from '../../core/models/rawg.models';
-import { AuthService } from '../../core/services/auth.service';
-import { ChatService } from '../../core/services/chat.service';
 import { GamesService } from '../../core/services/games.service';
-import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
@@ -26,27 +28,6 @@ import { SocialService } from '../../core/services/social.service';
   template: `
     <ion-content>
       <div class="page-shell page">
-        <section class="welcome surface-card">
-          <p class="eyebrow">Bienvenido</p>
-          <h1>{{ userName() }}</h1>
-          <p>Tu panel principal concentra actividad, reviews y conversaciones activas.</p>
-        </section>
-
-        <section class="card-grid">
-          <article class="surface-card stat">
-            <span>{{ stats().reviews }}</span>
-            <p>Reviews publicadas</p>
-          </article>
-          <article class="surface-card stat">
-            <span>{{ stats().posts }}</span>
-            <p>Posts en la comunidad</p>
-          </article>
-          <article class="surface-card stat">
-            <span>{{ stats().rooms }}</span>
-            <p>Chats activos</p>
-          </article>
-        </section>
-
         <section class="surface-card games-preview">
           <div class="preview-header">
             <div>
@@ -86,7 +67,7 @@ import { SocialService } from '../../core/services/social.service';
           </article>
           <article class="surface-card quick-card">
             <h2>Comunidad</h2>
-            <p>Publica contenido o entra a tus chats personales y grupales.</p>
+            <p>Entra a tus chats personales y grupales.</p>
             <ion-button class="action-button" color="primary" expand="block" [routerLink]="['/tabs/social']" routerLinkActive="action-button-active">
               Ir a Social
             </ion-button>
@@ -100,21 +81,11 @@ export class HomePage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly fallbackCover = 'https://via.placeholder.com/360x220?text=Juego';
-  readonly userName = computed(() => this.auth.currentUser()?.name ?? 'Jugador');
-  readonly stats = computed(() => ({
-    reviews: this.social.reviews().length,
-    posts: this.social.posts().length,
-    rooms: this.chat.rooms().length
-  }));
-
   popularGames: RawgGame[] = [];
   gamesLoading = false;
   gamesError = '';
 
   constructor(
-    private readonly auth: AuthService,
-    private readonly social: SocialService,
-    private readonly chat: ChatService,
     private readonly gamesService: GamesService
   ) {}
 
