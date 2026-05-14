@@ -12,6 +12,8 @@ import {
   chatbubblesOutline,
   gameControllerOutline,
   homeOutline,
+  newspaperOutline,
+  peopleOutline,
   personCircleOutline,
   starOutline
 } from 'ionicons/icons';
@@ -41,6 +43,14 @@ import {
           <ion-icon name="chatbubbles-outline"></ion-icon>
           <ion-label>Social</ion-label>
         </ion-tab-button>
+        <ion-tab-button tab="feed" href="/tabs/feed">
+          <ion-icon name="newspaper-outline"></ion-icon>
+          <ion-label>Feed</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="users" href="/tabs/users">
+          <ion-icon name="people-outline"></ion-icon>
+          <ion-label>Users</ion-label>
+        </ion-tab-button>
         <ion-tab-button tab="profile" href="/tabs/profile">
           <ion-icon name="person-circle-outline"></ion-icon>
           <ion-label>Perfil</ion-label>
@@ -56,6 +66,8 @@ export class TabsPage {
       starOutline,
       gameControllerOutline,
       chatbubblesOutline,
+      newspaperOutline,
+      peopleOutline,
       personCircleOutline
     });
   }

@@ -7,14 +7,12 @@ import {
   IonInput,
   IonItem,
   IonLabel,
-  IonList,
   IonSegment,
   IonSegmentButton
 } from '@ionic/angular/standalone';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
-import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
@@ -26,7 +24,6 @@ import { SocialService } from '../../core/services/social.service';
     IonInput,
     IonItem,
     IonLabel,
-    IonList,
     IonSegment,
     IonSegmentButton
   ],
@@ -34,26 +31,6 @@ import { SocialService } from '../../core/services/social.service';
   template: `
     <ion-content>
       <div class="page-shell page">
-        <section class="surface-card post-box">
-          <h1>Feed social</h1>
-          <ion-item>
-            <ion-label position="stacked">Nuevo post</ion-label>
-            <ion-input [(ngModel)]="postContent" placeholder="Comparte algo con la comunidad"></ion-input>
-          </ion-item>
-          <ion-button expand="block" (click)="publishPost()">Publicar</ion-button>
-        </section>
-
-        <ion-list class="surface-card feed-list">
-          <ion-item lines="none" *ngFor="let post of social.posts()">
-            <ion-label>
-              <h2>{{ post.author }}</h2>
-              <p>{{ post.content }}</p>
-              <p>{{ post.createdAt }} - {{ post.likes }} likes</p>
-            </ion-label>
-            <ion-button fill="outline" (click)="likePost(post.id)">Like</ion-button>
-          </ion-item>
-        </ion-list>
-
         <section class="surface-card chat-card">
           <h1>Chat personal y grupal</h1>
           <ion-segment [(ngModel)]="selectedRoomId">
@@ -81,37 +58,14 @@ import { SocialService } from '../../core/services/social.service';
   `
 })
 export class SocialPage {
-  postContent = '';
   chatMessage = '';
   selectedRoomId = '';
 
   constructor(
-    public readonly social: SocialService,
     public readonly chat: ChatService,
     private readonly auth: AuthService
   ) {
     this.selectedRoomId = this.chat.rooms()[0]?.id ?? '';
-  }
-
-  publishPost(): void {
-    const user = this.auth.currentUser();
-    if (!user || !this.postContent.trim()) {
-      return;
-    }
-
-    this.social.addPost({
-      id: crypto.randomUUID(),
-      author: user.name,
-      content: this.postContent.trim(),
-      likes: 0,
-      createdAt: 'Ahora'
-    });
-
-    this.postContent = '';
-  }
-
-  likePost(postId: string): void {
-    this.social.likePost(postId);
   }
 
   sendMessage(): void {

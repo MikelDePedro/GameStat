@@ -60,16 +60,51 @@ export class SocialService {
       author: 'Marta',
       content: 'Quien se apunta a scrim esta noche? Necesitamos support.',
       likes: 18,
-      createdAt: 'Hace 1 h'
+      createdAt: 'Hace 1 h',
+      createdAtTimestamp: Date.now() - 60 * 60 * 1000
     },
     {
       id: 'post-2',
       author: 'Iker Demo',
       content: 'He subido nueva review del parche. El balance esta mucho mejor.',
       likes: 7,
-      createdAt: 'Hace 3 h'
+      createdAt: 'Hace 3 h',
+      createdAtTimestamp: Date.now() - 3 * 60 * 60 * 1000
+    },
+    {
+      id: 'post-3',
+      author: 'Claudia',
+      content: 'Busco duo para subir rank esta tarde.',
+      likes: 11,
+      createdAt: 'Hace 5 h',
+      createdAtTimestamp: Date.now() - 5 * 60 * 60 * 1000
+    },
+    {
+      id: 'post-4',
+      author: 'Raul',
+      content: 'El evento nuevo deja recompensas bastante buenas.',
+      likes: 5,
+      createdAt: 'Ayer',
+      createdAtTimestamp: Date.now() - 24 * 60 * 60 * 1000
+    },
+    {
+      id: 'post-5',
+      author: 'Nerea',
+      content: 'Alguien ha probado el ultimo parche de balance?',
+      likes: 9,
+      createdAt: 'Hace 2 dias',
+      createdAtTimestamp: Date.now() - 2 * 24 * 60 * 60 * 1000
+    },
+    {
+      id: 'post-6',
+      author: 'Diego',
+      content: 'Esta noche montamos sala privada para practicar mapas.',
+      likes: 13,
+      createdAt: 'Hace 3 dias',
+      createdAtTimestamp: Date.now() - 3 * 24 * 60 * 60 * 1000
     }
   ]);
+  private readonly likedPostsByUser = signal<Record<string, string[]>>({});
 
   constructor(private readonly supabaseService: SupabaseService) {
     if (this.supabaseService.isConfigured) {
@@ -152,15 +187,30 @@ export class SocialService {
   }
 
   addPost(post: SocialPost): void {
-    this.posts.update((items) => [post, ...items]);
+    this.posts.update((items) =>
+      [post, ...items].sort((first, second) => second.createdAtTimestamp - first.createdAtTimestamp)
+    );
   }
 
-  likePost(postId: string): void {
+  hasLikedPost(postId: string, userId: string): boolean {
+    return this.likedPostsByUser()[userId]?.includes(postId) ?? false;
+  }
+
+  likePost(postId: string, userId: string): boolean {
+    if (this.hasLikedPost(postId, userId)) {
+      return false;
+    }
+
     this.posts.update((posts) =>
       posts.map((post) =>
         post.id === postId ? { ...post, likes: post.likes + 1 } : post
       )
     );
+    this.likedPostsByUser.update((items) => ({
+      ...items,
+      [userId]: [...(items[userId] ?? []), postId]
+    }));
+    return true;
   }
 
   private normalizeReviewPayload(payload: CreateReviewPayload): CreateReviewPayload {

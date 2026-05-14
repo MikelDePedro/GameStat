@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect } from '@angular/core';
+import { Component, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -13,6 +13,8 @@ import {
 } from '@ionic/angular/standalone';
 
 import { AuthService } from '../../core/services/auth.service';
+import { ChatService } from '../../core/services/chat.service';
+import { SocialService } from '../../core/services/social.service';
 
 @Component({
   standalone: true,
@@ -36,6 +38,21 @@ import { AuthService } from '../../core/services/auth.service';
           <h1>{{ profile.name }}</h1>
           <p>{{ profile.email }}</p>
           <ion-text color="medium">Juego favorito: {{ profile.favoriteGame }}</ion-text>
+        </section>
+
+        <section class="card-grid">
+          <article class="surface-card stat">
+            <span>{{ stats().reviews }}</span>
+            <p>Reviews publicadas</p>
+          </article>
+          <article class="surface-card stat">
+            <span>{{ stats().posts }}</span>
+            <p>Posts en la comunidad</p>
+          </article>
+          <article class="surface-card stat">
+            <span>{{ stats().rooms }}</span>
+            <p>Chats activos</p>
+          </article>
         </section>
 
         <section class="surface-card edit-card">
@@ -85,8 +102,18 @@ export class ProfilePage {
   loading = false;
   error = '';
   showSavedToast = false;
+  readonly stats = computed(() => ({
+    reviews: this.social.reviews().length,
+    posts: this.social.posts().length,
+    rooms: this.chat.rooms().length
+  }));
 
-  constructor(private readonly auth: AuthService, private readonly router: Router) {
+  constructor(
+    private readonly auth: AuthService,
+    private readonly router: Router,
+    private readonly social: SocialService,
+    private readonly chat: ChatService
+  ) {
     effect(() => {
       const currentUser = this.auth.currentUser();
       if (!currentUser) {

@@ -46,6 +46,14 @@ export const appRoutes: Routes = [
         loadComponent: () => import('./pages/social/social.page').then((m) => m.SocialPage)
       },
       {
+        path: 'feed',
+        loadComponent: () => import('./pages/feed/feed.page').then((m) => m.FeedPage)
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/users/users.page').then((m) => m.UsersPage)
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage)
       },
