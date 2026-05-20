@@ -78,6 +78,3 @@ PEDRILE A LA IA LO MISMO PERO PARA CHATS GRUPALES, IGUAL ES MEJOR JUNTAR TODO EN
 Cuando se clique en un chat, se abrirá la pestaña del chat. Se tienen que pasar como parametros el id de la conversación para saber que conversacion mostrar. Despues diseñar toda la pagina y hacer que funcione.
 
 2. Valbu crea mas usuarios en supabase para poder postear cosas desde todos y ver si funciona bien.
-
-
-3. es una prueba para ver si funciona

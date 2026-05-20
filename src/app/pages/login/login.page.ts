@@ -43,34 +43,41 @@ import { AuthService } from '../../core/services/auth.service';
     <ion-content [fullscreen]="true">
       <div class="page-shell auth-layout">
         <section class="surface-card auth-hero">
-          <p class="eyebrow">Comunidad, metricas y chat gamer</p>
-          <h1>Vuelve a GameStat</h1>
-          <p>
-            Inicia sesion para continuar con tus reviews, actividad social y conversaciones activas.
-          </p>
-          <div class="hero-actions">
-            <ion-button routerLink="/landing" fill="clear">Ir a landing</ion-button>
-            <ion-button routerLink="/register" fill="outline">Crear cuenta</ion-button>
+          <div class="hero-inner">
+            <p class="eyebrow">HABITOSGALI</p>
+            <h1>Convierte tus habitos en progreso real</h1>
+            <p class="lead">Entra a tu panel social, revisa tus rachas y comparte avances con tus amigos en una experiencia mas visual.</p>
+
+            <div class="hero-badges">
+              <span class="badge">Rachas dinamicas</span>
+              <span class="badge">Registros sociales</span>
+              <span class="badge">Estadisticas</span>
+            </div>
           </div>
         </section>
 
         <section class="surface-card auth-card">
-          <h2>Iniciar sesion</h2>
-          <p class="helper">Accede con tu cuenta para entrar a tus tabs.</p>
+          <h2>Bienvenido de vuelta</h2>
+          <p class="helper">Accede a tus habitos y registros sociales.</p>
 
-          <ion-item class="form-item">
-            <ion-label position="stacked">Email</ion-label>
-            <ion-input [(ngModel)]="email" type="email" placeholder="tuemail@dominio.com"></ion-input>
-          </ion-item>
+          <div class="form-fields">
+            <ion-item class="form-item">
+              <ion-label position="stacked">Nick o email</ion-label>
+              <ion-input [(ngModel)]="email" type="email" placeholder=""></ion-input>
+            </ion-item>
 
-          <ion-item class="form-item">
-            <ion-label position="stacked">Contrasena</ion-label>
-            <ion-input [(ngModel)]="password" type="password" placeholder="Minimo 6 caracteres"></ion-input>
-          </ion-item>
+            <ion-item class="form-item">
+              <ion-label position="stacked">Contraseña</ion-label>
+              <ion-input [(ngModel)]="password" type="password" placeholder=""></ion-input>
+            </ion-item>
+          </div>
 
-          <ion-button expand="block" [disabled]="loading" (click)="submit()">
-            {{ loading ? 'Entrando...' : 'Entrar' }}
-          </ion-button>
+          <div class="actions-row">
+            <a class="forgot" routerLink="/forgot">He olvidado mi contraseña</a>
+            <ion-button expand="block" class="primary-gradient" [disabled]="loading" (click)="submit()">
+              {{ loading ? 'Entrando...' : 'Entrar' }}
+            </ion-button>
+          </div>
 
           <ion-text color="danger" *ngIf="error">
             <p class="feedback">{{ error }}</p>

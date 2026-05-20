@@ -43,44 +43,44 @@ import { AuthService } from '../../core/services/auth.service';
     <ion-content [fullscreen]="true">
       <div class="page-shell auth-layout">
         <section class="surface-card auth-hero">
-          <p class="eyebrow">Comunidad, metricas y chat gamer</p>
-          <h1>Crea tu perfil gamer</h1>
-          <p>
-            Registrate para publicar reviews, participar en la comunidad y entrar al chat de GameStat.
-          </p>
-          <div class="hero-actions">
-            <ion-button routerLink="/landing" fill="clear">Ir a landing</ion-button>
-            <ion-button routerLink="/login" fill="outline">Ya tengo cuenta</ion-button>
+          <div class="hero-inner">
+            <p class="eyebrow">HABITOSGALI</p>
+            <h1>Empieza hoy y manten el foco</h1>
+            <p class="lead">Crea tu cuenta, configura tus habitos y descubre una forma mas divertida de medir constancia con tu gente.</p>
+
+            <div class="hero-badges">
+              <span class="badge">Configura en minutos</span>
+              <span class="badge">Comparte logros</span>
+              <span class="badge">Todo en una app</span>
+            </div>
           </div>
         </section>
 
         <section class="surface-card auth-card">
-          <h2>Crear cuenta</h2>
-          <p class="helper">Completa tus datos basicos para comenzar.</p>
+          <h2>Crea tu cuenta</h2>
+          <p class="helper">Empieza a registrar y compartir tus habitos.</p>
 
-          <ion-item class="form-item">
-            <ion-label position="stacked">Nombre</ion-label>
-            <ion-input [(ngModel)]="form.name"></ion-input>
-          </ion-item>
-          <ion-item class="form-item">
-            <ion-label position="stacked">Email</ion-label>
-            <ion-input [(ngModel)]="form.email" type="email"></ion-input>
-          </ion-item>
-          <ion-item class="form-item">
-            <ion-label position="stacked">Contrasena</ion-label>
-            <ion-input [(ngModel)]="form.password" type="password" placeholder="Minimo 6 caracteres"></ion-input>
-          </ion-item>
-          <ion-item class="form-item">
-            <ion-label position="stacked">Juego favorito</ion-label>
-            <ion-input [(ngModel)]="form.favoriteGame"></ion-input>
-          </ion-item>
-          <ion-item class="form-item">
-            <ion-label position="stacked">Bio</ion-label>
-            <ion-input [(ngModel)]="form.bio"></ion-input>
-          </ion-item>
+          <div class="form-fields">
+            <ion-item class="form-item">
+              <ion-label position="stacked">Nick</ion-label>
+              <ion-input [(ngModel)]="form.name"></ion-input>
+            </ion-item>
+            <ion-item class="form-item">
+              <ion-label position="stacked">Email</ion-label>
+              <ion-input [(ngModel)]="form.email" type="email"></ion-input>
+            </ion-item>
+            <ion-item class="form-item">
+              <ion-label position="stacked">Contraseña</ion-label>
+              <ion-input [(ngModel)]="form.password" type="password"></ion-input>
+            </ion-item>
+            <ion-item class="form-item">
+              <ion-label position="stacked">Repite contraseña</ion-label>
+              <ion-input type="password"></ion-input>
+            </ion-item>
+          </div>
 
-          <ion-button expand="block" [disabled]="loading" (click)="submit()">
-            {{ loading ? 'Creando cuenta...' : 'Crear cuenta' }}
+          <ion-button expand="block" class="primary-gradient" [disabled]="loading" (click)="submit()">
+            {{ loading ? 'Creando cuenta...' : 'Registrarme' }}
           </ion-button>
 
           <ion-text color="success" *ngIf="message">
