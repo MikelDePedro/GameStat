@@ -44,9 +44,9 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="page-shell auth-layout">
         <section class="surface-card auth-hero">
           <div class="hero-inner">
-            <p class="eyebrow">HABITOSGALI</p>
+            <p class="eyebrow">GAMESTAT</p>
             <h1>Empieza hoy y manten el foco</h1>
-            <p class="lead">Crea tu cuenta, configura tus habitos y descubre una forma mas divertida de medir constancia con tu gente.</p>
+            <p class="lead">Crea tu cuenta, configura tus perfil y descubre una forma mas divertida compartir y hablar con tus amigos.</p>
 
             <div class="hero-badges">
               <span class="badge">Configura en minutos</span>

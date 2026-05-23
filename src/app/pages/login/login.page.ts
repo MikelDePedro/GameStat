@@ -44,13 +44,13 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="page-shell auth-layout">
         <section class="surface-card auth-hero">
           <div class="hero-inner">
-            <p class="eyebrow">HABITOSGALI</p>
-            <h1>Convierte tus habitos en progreso real</h1>
-            <p class="lead">Entra a tu panel social, revisa tus rachas y comparte avances con tus amigos en una experiencia mas visual.</p>
+            <p class="eyebrow">GAMESTAT</p>
+            <h1>Recupera el control de tu experiencia de juego y sigue cada logro con mas detalle</h1>
+            <p class="lead">Entra a tu panel social, revisa tus mensajes y comparte opiniones con tus amigos en una experiencia mas visual.</p>
 
             <div class="hero-badges">
-              <span class="badge">Rachas dinamicas</span>
-              <span class="badge">Registros sociales</span>
+              <span class="badge">Valorar Juegos</span>
+              <span class="badge">Registros de tu trayectoria</span>
               <span class="badge">Estadisticas</span>
             </div>
           </div>

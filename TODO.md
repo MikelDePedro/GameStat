@@ -49,7 +49,7 @@
 
 ## 8. Deploy
 - [x] Build (`npm run build`)
-- [ ] Despliegue (Netlify / Vercel)
+- [x] Despliegue (Netlify / Vercel)
 - [ ] CI/CD (GitHub Actions)
 
 ## 9. Docs
