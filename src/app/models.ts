@@ -1,3 +1,9 @@
+// =====================================================================
+//  Modelos compartidos del dominio GameStat.
+//  Tipos del FRONTEND en camelCase. Las filas Supabase (snake_case)
+//  se mapean en cada servicio.
+// =====================================================================
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -19,26 +25,70 @@ export interface ReviewItem {
   createdAt: string;
 }
 
+// ---------- FEED SOCIAL ----------
 export interface SocialPost {
   id: string;
+  userId: string;
   author: string;
+  authorAvatar: string;
   content: string;
   likes: number;
+  comments: number;
+  liked: boolean;
   createdAt: string;
   createdAtTimestamp: number;
 }
 
-export interface ChatMessage {
+export interface SocialComment {
   id: string;
-  roomId: string;
-  sender: string;
+  postId: string;
+  userId: string;
+  author: string;
+  authorAvatar: string;
   content: string;
   createdAt: string;
 }
 
-export interface ChatRoom {
-  id: string;
-  title: string;
-  type: 'personal' | 'group';
-  members: string[];
+// ---------- CHAT ----------
+export type ConversationType = 'private' | 'group';
+
+export interface ConversationParticipant {
+  userId: string;
+  name: string;
+  avatar: string;
+  role: 'admin' | 'member';
 }
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  title: string;          // para privados: nombre del otro usuario
+  avatar: string;
+  createdBy: string | null;
+  createdAt: string;
+  lastMessageAt: string;
+  lastMessageAtTimestamp: number;
+  participants: ConversationParticipant[];
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string | null;
+  senderName: string;
+  senderAvatar: string;
+  content: string;
+  createdAt: string;
+  createdAtTimestamp: number;
+}
+
+// ---------- FOLLOWS ----------
+export interface FollowStats {
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+}
+
+// ---------- LEGACY (compat) ----------
+// Algunas vistas antiguas pueden seguir importando estos tipos.
+export type ChatRoom = Conversation;

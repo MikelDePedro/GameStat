@@ -9,12 +9,15 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+-- Cualquier usuario autenticado puede leer perfiles publicos (necesario para feed,
+-- chat, follows, busqueda de usuarios, etc).
 drop policy if exists "Users can read their own profile" on public.profiles;
-create policy "Users can read their own profile"
+drop policy if exists "Authenticated users can read profiles" on public.profiles;
+create policy "Authenticated users can read profiles"
 on public.profiles
 for select
 to authenticated
-using ((select auth.uid()) = id);
+using (true);
 
 drop policy if exists "Users can insert their own profile" on public.profiles;
 create policy "Users can insert their own profile"

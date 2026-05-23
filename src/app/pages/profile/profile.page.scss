@@ -45,3 +45,108 @@
 .profile-card ion-item {
   --background: rgba(30, 41, 59, 0.75);
 }
+
+/* New extended styles */
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.profile-card {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.avatar-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.avatar-circle.big {
+  width: 88px;
+  height: 88px;
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.muted {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.bio {
+  color: #cbd5e1;
+  margin: 6px 0 0;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.stats > div {
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stats strong {
+  display: block;
+  font-size: 1.3rem;
+}
+
+.stats span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.posts-card {
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  display: grid;
+  gap: 12px;
+}
+
+.mini-post {
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.mini-post p {
+  margin: 4px 0;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+}
+
+.mini-post small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+}
