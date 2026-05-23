@@ -92,3 +92,20 @@
   color: #93c5fd;
   font-size: 0.9rem;
 }
+
+.avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.search ion-input {
+  --background: transparent;
+}

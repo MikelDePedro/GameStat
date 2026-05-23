@@ -36,3 +36,297 @@ ion-content {
   border-radius: 20px;
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.22);
 }
+
+/* ===================================================================
+   Theming global de componentes Ionic para GameStat.
+   Fondo oscuro + texto claro consistente con la paleta de la app.
+
+   IMPORTANTE: en Ionic 8, ion-input / ion-textarea / ion-button montan
+   el control nativo dentro de su Shadow DOM. Los selectores externos
+   ("ion-textarea textarea") NO atraviesan el shadow DOM. Hay que usar
+   ::part(native) o variables CSS (--background, --color), porque las
+   custom properties SI cruzan el shadow boundary.
+   =================================================================== */
+
+/* ---------- Items que envuelven inputs ---------- */
+ion-item {
+  --background: rgba(15, 23, 42, 0.55);
+  --background-hover: rgba(15, 23, 42, 0.7);
+  --background-activated: rgba(15, 23, 42, 0.7);
+  --background-focused: rgba(15, 23, 42, 0.7);
+  --color: #e2e8f0;
+  --border-color: rgba(148, 163, 184, 0.18);
+  --border-radius: 12px;
+  --padding-start: 14px;
+  --inner-padding-end: 14px;
+  --highlight-color-focused: var(--ion-color-primary);
+  margin-bottom: 10px;
+}
+
+ion-item ion-label {
+  --color: #cbd5e1;
+  color: #cbd5e1 !important;
+}
+
+ion-item ion-label[position='stacked'] {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8 !important;
+}
+
+/* ---------- Inputs ---------- */
+ion-input {
+  --background: rgba(15, 23, 42, 0.7);
+  --color: #f1f5f9 !important;
+  --placeholder-color: #94a3b8 !important;
+  --placeholder-opacity: 0.9;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --border-radius: 12px;
+  border-radius: 12px;
+  color: #f1f5f9;
+  caret-color: var(--ion-color-primary);
+}
+
+/* Dentro de un ion-item el input no necesita su propio fondo */
+ion-item ion-input {
+  --background: transparent;
+}
+
+/* Acceso al <input> nativo dentro del shadow DOM */
+ion-input::part(native) {
+  color: #f1f5f9 !important;
+  caret-color: var(--ion-color-primary) !important;
+}
+
+ion-input::part(placeholder) {
+  color: #94a3b8 !important;
+  opacity: 0.9 !important;
+}
+
+/* ---------- Textareas (BUGFIX: texto blanco sobre blanco) ---------- */
+ion-textarea {
+  --background: rgba(15, 23, 42, 0.7);
+  --color: #f1f5f9 !important;
+  --placeholder-color: #94a3b8 !important;
+  --placeholder-opacity: 0.9;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #f1f5f9;
+  caret-color: var(--ion-color-primary);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+ion-textarea:focus-within {
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 3px rgba(49, 196, 141, 0.18);
+}
+
+/* Acceso al <textarea> nativo dentro del shadow DOM */
+ion-textarea::part(native) {
+  color: #f1f5f9 !important;
+  caret-color: var(--ion-color-primary) !important;
+  background: transparent !important;
+}
+
+ion-textarea::part(placeholder) {
+  color: #94a3b8 !important;
+  opacity: 0.9 !important;
+}
+
+/* Dentro de un ion-item el textarea hereda fondo del item */
+ion-item ion-textarea {
+  --background: transparent;
+  border: none;
+  background: transparent;
+}
+
+/* Fallback para Ionic legacy textarea (no shadow-DOM) */
+.native-textarea,
+.native-input {
+  color: #f1f5f9 !important;
+  caret-color: var(--ion-color-primary) !important;
+}
+
+.native-textarea::placeholder,
+.native-input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 0.9 !important;
+}
+
+/* ---------- Ranges ---------- */
+ion-range {
+  --bar-background: rgba(148, 163, 184, 0.25);
+  --bar-background-active: var(--ion-color-primary);
+  --knob-background: var(--ion-color-primary);
+  --knob-size: 22px;
+  --pin-background: var(--ion-color-primary);
+  --pin-color: #04130d;
+  padding: 8px 0;
+}
+
+/* ---------- Botones ----------
+   Usamos !important en las custom props porque algunas paginas viejas
+   (p.ej. home.page.scss) usaban ::ng-deep con !important. Sin esto los
+   nuevos estilos no ganarian especificidad sobre los antiguos. */
+ion-button {
+  --border-radius: 12px !important;
+  --padding-start: 18px !important;
+  --padding-end: 18px !important;
+  --padding-top: 14px !important;
+  --padding-bottom: 14px !important;
+  --box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Primario / default */
+ion-button[color='primary'],
+ion-button:not([color]):not([fill='clear']):not([fill='outline']) {
+  --background: linear-gradient(135deg, #31c48d 0%, #2bb37e 60%, #14b8a6 100%) !important;
+  --background-hover: linear-gradient(135deg, #38d49a 0%, #2dbb84 60%, #1ac0ad 100%) !important;
+  --background-activated: linear-gradient(135deg, #28a576 0%, #1f9466 100%) !important;
+  --background-focused: linear-gradient(135deg, #38d49a 0%, #1ac0ad 100%) !important;
+  --color: #04130d !important;
+  --color-hover: #04130d !important;
+}
+
+ion-button[color='secondary'] {
+  --background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+  --background-hover: linear-gradient(135deg, #6db1ff, #4b8fff) !important;
+  --background-activated: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  --color: #f8fafc !important;
+}
+
+ion-button[color='danger'] {
+  --background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  --background-hover: linear-gradient(135deg, #f87171, #ef4444) !important;
+  --color: #fff !important;
+}
+
+ion-button[color='medium'] {
+  --background: rgba(71, 85, 105, 0.55) !important;
+  --background-hover: rgba(71, 85, 105, 0.75) !important;
+  --color: #e2e8f0 !important;
+}
+
+/* Variantes fill */
+ion-button[fill='outline'] {
+  --border-color: rgba(148, 163, 184, 0.55) !important;
+  --border-width: 1px !important;
+  --background: rgba(15, 23, 42, 0.45) !important;
+  --background-hover: rgba(49, 196, 141, 0.12) !important;
+  --color: #e2e8f0 !important;
+  --box-shadow: none !important;
+}
+
+ion-button[fill='outline'][color='primary'] {
+  --border-color: rgba(49, 196, 141, 0.7) !important;
+  --color: #5eead4 !important;
+}
+
+ion-button[fill='outline'][color='danger'] {
+  --border-color: rgba(239, 68, 68, 0.6) !important;
+  --color: #fca5a5 !important;
+  --background-hover: rgba(239, 68, 68, 0.12) !important;
+}
+
+ion-button[fill='clear'] {
+  --background: transparent !important;
+  --background-hover: rgba(148, 163, 184, 0.12) !important;
+  --color: #cbd5e1 !important;
+  --box-shadow: none !important;
+  --padding-top: 8px !important;
+  --padding-bottom: 8px !important;
+}
+
+ion-button[fill='clear'][color='primary'] {
+  --color: #5eead4 !important;
+}
+
+ion-button[fill='clear'][color='danger'] {
+  --color: #fca5a5 !important;
+}
+
+ion-button[disabled],
+ion-button.button-disabled {
+  --background: rgba(71, 85, 105, 0.35) !important;
+  --color: rgba(226, 232, 240, 0.55) !important;
+  --box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+ion-button[shape='round'] {
+  --border-radius: 999px !important;
+}
+
+ion-button[size='small'] {
+  --padding-top: 8px !important;
+  --padding-bottom: 8px !important;
+  --padding-start: 12px !important;
+  --padding-end: 12px !important;
+  font-size: 12px;
+}
+
+/* ---------- Segments ---------- */
+ion-segment {
+  --background: rgba(15, 23, 42, 0.55);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+ion-segment-button {
+  --background-checked: linear-gradient(135deg, #31c48d, #14b8a6);
+  --color: #94a3b8;
+  --color-checked: #04130d;
+  --indicator-color: transparent;
+  --border-radius: 10px;
+  text-transform: none;
+  font-weight: 600;
+  min-height: 38px;
+}
+
+/* ---------- Lists / avatares ---------- */
+ion-list {
+  background: transparent;
+}
+
+ion-avatar {
+  background: linear-gradient(135deg, #31c48d, #60a5fa);
+}
+
+/* ---------- Toasts ---------- */
+ion-toast {
+  --border-radius: 12px;
+  --box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
+}
+
+/* ---------- Alert (popups) ---------- */
+ion-alert .alert-wrapper {
+  --background: #0f1f2e;
+  --color: #e2e8f0;
+}
+
+ion-alert .alert-input {
+  color: #f1f5f9 !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+ion-alert .alert-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+ion-alert .alert-button {
+  color: #5eead4 !important;
+}

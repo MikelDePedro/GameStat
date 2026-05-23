@@ -20,6 +20,12 @@ export const appRoutes: Routes = [
     path: 'register',
     loadComponent: () => import('./pages/register/register.page').then((m) => m.RegisterPage)
   },
+  // Vista pública de perfil (sin tabs) por si se enlaza desde fuera.
+  {
+    path: 'profile/:userId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage)
+  },
   {
     path: 'tabs',
     canActivate: [authGuard],
@@ -46,6 +52,11 @@ export const appRoutes: Routes = [
         loadComponent: () => import('./pages/social/social.page').then((m) => m.SocialPage)
       },
       {
+        path: 'social/chat/:conversationId',
+        loadComponent: () =>
+          import('./pages/chat-detail/chat-detail.page').then((m) => m.ChatDetailPage)
+      },
+      {
         path: 'feed',
         loadComponent: () => import('./pages/feed/feed.page').then((m) => m.FeedPage)
       },
@@ -55,6 +66,10 @@ export const appRoutes: Routes = [
       },
       {
         path: 'profile',
+        loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage)
+      },
+      {
+        path: 'profile/:userId',
         loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage)
       },
       {
