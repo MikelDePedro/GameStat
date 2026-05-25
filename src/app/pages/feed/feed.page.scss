@@ -1,6 +1,9 @@
 .feed-shell {
   display: grid;
-  gap: 20px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
   max-width: 900px;
   margin: 0 auto;
@@ -8,11 +11,22 @@
 
 .composer-card,
 .feed-list-card {
-  padding: 18px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.92);
+  padding: 16px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
+}
+
+.feed-list-card {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.composer-card ion-item {
+  margin-bottom: 0;
+}
+
+.composer-card ion-textarea {
+  min-height: 58px;
 }
 
 .feed-header {
@@ -23,10 +37,15 @@
 
 .eyebrow {
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #94a3b8;
+}
+
+.feed-header h1,
+.feed-header h2 {
+  margin: 0;
+}
+
+.feed-header h1 {
+  font-size: 1.25rem;
 }
 
 .actions {
@@ -37,18 +56,22 @@
 
 .char-count {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--app-text-soft);
 }
 
 .posts {
   background: transparent;
   display: grid;
   gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
 }
 
 .post-card {
-  background: rgba(30, 41, 59, 0.7);
-  border-radius: 14px;
+  background: rgba(42, 37, 70, 0.58);
+  border: 1px solid rgba(196, 181, 253, 0.14);
+  border-radius: 12px;
   padding: 14px;
   display: grid;
   gap: 10px;
@@ -69,17 +92,17 @@
 
 .post-card .meta strong {
   cursor: pointer;
-  color: #e2e8f0;
+  color: var(--app-text);
 }
 
 .post-card .meta span {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--app-text-soft);
 }
 
 .post-card .content {
   margin: 0;
-  color: #e2e8f0;
+  color: var(--app-text-muted);
   white-space: pre-wrap;
 }
 
@@ -92,7 +115,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #8b5cf6, #38bdf8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -109,7 +132,7 @@
 }
 
 .comments {
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid rgba(196, 181, 253, 0.18);
   padding-top: 10px;
   display: grid;
   gap: 10px;
@@ -124,18 +147,18 @@
 
 .comment p {
   margin: 2px 0 0;
-  color: #e2e8f0;
+  color: var(--app-text-muted);
 }
 
 .comment small {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--app-text-soft);
   margin-left: 6px;
 }
 
 .comment-composer ion-input {
-  --background: rgba(15, 23, 42, 0.6);
-  --color: #e2e8f0;
+  --background: rgba(27, 24, 46, 0.72);
+  --color: var(--app-text);
   border-radius: 999px;
   --padding-start: 12px;
   --padding-end: 12px;
@@ -148,7 +171,18 @@
 }
 
 .empty {
-  color: #94a3b8;
+  color: var(--app-text-soft);
   text-align: center;
   margin: 10px 0;
+}
+
+@media (max-width: 640px) {
+  .feed-shell {
+    padding: 12px;
+  }
+
+  .composer-card,
+  .feed-list-card {
+    padding: 14px;
+  }
 }

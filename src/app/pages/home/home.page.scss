@@ -1,32 +1,31 @@
 .page {
   padding: 20px;
+  display: grid;
+  gap: 18px;
 }
 .welcome,
 .stat,
 .quick-card {
-  padding: 20px;
+  padding: 18px;
 }
 .welcome {
   margin-bottom: 20px;
 }
 .eyebrow {
-  color: #60a5fa;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
+  margin: 0 0 6px;
 }
 .stat span {
   display: block;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
 }
 .quick-links {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .games-preview {
-  margin-top: 20px;
-  padding: 20px;
+  margin-top: 0;
+  padding: 18px;
 }
 
 .preview-header {
@@ -54,10 +53,10 @@
 }
 
 .game-tile {
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 14px;
+  border: 1px solid rgba(196, 181, 253, 0.14);
+  border-radius: 12px;
   padding: 10px;
-  background: rgba(15, 30, 48, 0.75);
+  background: rgba(42, 37, 70, 0.58);
 }
 
 .game-tile img {
@@ -75,7 +74,7 @@
 
 .game-tile p {
   margin: 0;
-  color: #cbd5e1;
+  color: var(--app-text-muted);
   font-size: 0.9rem;
 }
 

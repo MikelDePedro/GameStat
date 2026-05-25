@@ -21,14 +21,14 @@
 
 .title-text small {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--app-text-soft);
 }
 
 .avatar-circle {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #8b5cf6, #38bdf8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -68,10 +68,11 @@
 }
 
 .bubble {
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(42, 37, 70, 0.72);
+  border: 1px solid rgba(196, 181, 253, 0.12);
   border-radius: 14px;
   padding: 8px 12px;
-  color: #e2e8f0;
+  color: var(--app-text);
   max-width: 80%;
 }
 
@@ -80,12 +81,12 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--app-text-soft);
   margin-bottom: 4px;
 }
 
 .sender-name {
-  color: #93c5fd;
+  color: #ddd6fe;
   cursor: pointer;
   text-decoration: none;
 }
@@ -104,8 +105,8 @@
 }
 
 .composer ion-input {
-  --background: rgba(15, 23, 42, 0.6);
-  --color: #e2e8f0;
+  --background: rgba(27, 24, 46, 0.72);
+  --color: var(--app-text);
   --padding-start: 12px;
   --padding-end: 12px;
   border-radius: 999px;
@@ -114,7 +115,7 @@
 
 .empty {
   text-align: center;
-  color: #94a3b8;
+  color: var(--app-text-soft);
   margin-top: 24px;
 }
 

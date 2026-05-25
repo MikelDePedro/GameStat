@@ -3,10 +3,10 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
-  AlertController,
   IonAvatar,
   IonBadge,
   IonButton,
+  IonCheckbox,
   IonContent,
   IonIcon,
   IonInput,
@@ -44,6 +44,7 @@ type Tab = 'private' | 'group';
     IonAvatar,
     IonBadge,
     IonButton,
+    IonCheckbox,
     IonContent,
     IonIcon,
     IonInput,
@@ -144,6 +145,48 @@ type Tab = 'private' | 'group';
           </ion-list>
         </section>
       </div>
+
+      <div class="group-modal-backdrop" *ngIf="groupModalOpen()" (click)="closeGroupModal()">
+        <section class="surface-card group-modal" (click)="$event.stopPropagation()">
+          <header class="group-modal-header">
+            <div>
+              <p class="eyebrow">Grupo</p>
+              <h2>Nuevo grupo</h2>
+            </div>
+            <ion-button fill="clear" color="medium" (click)="closeGroupModal()">Cerrar</ion-button>
+          </header>
+
+          <ion-item lines="none">
+            <ion-label position="stacked">Nombre del grupo</ion-label>
+            <ion-input [(ngModel)]="groupTitle"></ion-input>
+          </ion-item>
+
+          <div class="group-member-list">
+            <p class="member-list-title">Usuarios</p>
+            <label class="group-member-row" *ngFor="let u of groupCandidates(); trackBy: trackByUser">
+              <ion-checkbox
+                [checked]="isGroupMemberSelected(u.id)"
+                (ionChange)="toggleGroupMember(u.id, $event.detail.checked)">
+              </ion-checkbox>
+              <span>
+                <strong>{{ u.name }}</strong>
+                <small>{{ u.favoriteGame || 'Sin juego favorito' }}</small>
+              </span>
+            </label>
+          </div>
+
+          <ion-text color="medium" *ngIf="!groupCandidates().length">
+            <p class="empty">No hay usuarios disponibles para anadir.</p>
+          </ion-text>
+
+          <div class="group-modal-actions">
+            <ion-button fill="outline" color="medium" (click)="closeGroupModal()">Cancelar</ion-button>
+            <ion-button [disabled]="creatingGroup()" (click)="createGroupFromModal()">
+              {{ creatingGroup() ? 'Creando...' : 'Crear grupo' }}
+            </ion-button>
+          </div>
+        </section>
+      </div>
     </ion-content>
   `
 })
@@ -151,7 +194,12 @@ export class SocialPage implements OnInit {
   readonly activeTab = signal<Tab>('private');
   readonly users = signal<UserProfile[]>([]);
   readonly loadingUsers = signal(false);
+  readonly groupModalOpen = signal(false);
+  readonly groupCandidates = signal<UserProfile[]>([]);
+  readonly creatingGroup = signal(false);
   searchTerm = '';
+  groupTitle = '';
+  selectedGroupMemberIds = new Set<string>();
   private searchHandle: ReturnType<typeof setTimeout> | null = null;
 
   readonly filteredConversations = computed<Conversation[]>(() =>
@@ -163,8 +211,7 @@ export class SocialPage implements OnInit {
     private readonly auth: AuthService,
     private readonly profiles: ProfileService,
     private readonly router: Router,
-    private readonly toastCtrl: ToastController,
-    private readonly alertCtrl: AlertController
+    private readonly toastCtrl: ToastController
   ) {
     addIcons({
       addCircleOutline,
@@ -206,20 +253,6 @@ export class SocialPage implements OnInit {
     this.searchHandle = setTimeout(() => void this.loadUsers(), 250);
   }
 
-  private async loadUsers(): Promise<void> {
-    const me = this.auth.currentUser();
-    if (!me) return;
-    this.loadingUsers.set(true);
-    try {
-      const items = await this.profiles.search(this.searchTerm);
-      this.users.set(items.filter((u) => u.id !== me.id));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      this.loadingUsers.set(false);
-    }
-  }
-
   async startPrivate(user: UserProfile): Promise<void> {
     try {
       const convId = await this.chat.getOrCreatePrivateConversation(user.id);
@@ -233,59 +266,67 @@ export class SocialPage implements OnInit {
     const me = this.auth.currentUser();
     if (!me) return;
 
-    let candidates: UserProfile[] = [];
     try {
-      candidates = (await this.profiles.listAll()).filter((u) => u.id !== me.id);
+      const candidates = (await this.profiles.listAll()).filter((u) => u.id !== me.id);
+      this.groupCandidates.set(candidates);
+      this.selectedGroupMemberIds = new Set<string>();
+      this.groupTitle = '';
+      this.groupModalOpen.set(true);
     } catch (e) {
       void this.showToast(this.errorMessage(e), 'danger');
+    }
+  }
+
+  closeGroupModal(): void {
+    this.groupModalOpen.set(false);
+  }
+
+  isGroupMemberSelected(userId: string): boolean {
+    return this.selectedGroupMemberIds.has(userId);
+  }
+
+  toggleGroupMember(userId: string, checked: boolean): void {
+    if (checked) {
+      this.selectedGroupMemberIds.add(userId);
+    } else {
+      this.selectedGroupMemberIds.delete(userId);
+    }
+
+    this.selectedGroupMemberIds = new Set(this.selectedGroupMemberIds);
+  }
+
+  async createGroupFromModal(): Promise<void> {
+    const title = this.groupTitle.trim();
+
+    if (!title) {
+      void this.showToast('El nombre del grupo es obligatorio.', 'warning');
       return;
     }
 
-    const alert = await this.alertCtrl.create({
-      header: 'Nuevo grupo',
-      inputs: [
-        { name: 'title', type: 'text', placeholder: 'Nombre del grupo' },
-        ...candidates.map((u) => ({
-          name: u.id,
-          type: 'checkbox' as const,
-          label: `${u.name}${u.favoriteGame ? ' · ' + u.favoriteGame : ''}`,
-          value: u.id
-        }))
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Crear',
-          handler: async (raw: unknown) => {
-            // Ionic devuelve { title: '...' } o un array de IDs marcados.
-            let title = '';
-            let memberIds: string[] = [];
-            if (Array.isArray(raw)) {
-              memberIds = raw as string[];
-            } else if (raw && typeof raw === 'object') {
-              const obj = raw as Record<string, unknown>;
-              title = (obj['title'] ?? '').toString().trim();
-              memberIds = Object.keys(obj).filter(
-                (k) => k !== 'title' && Boolean(obj[k])
-              );
-            }
-            if (!title) {
-              void this.showToast('El nombre del grupo es obligatorio.', 'warning');
-              return false;
-            }
-            try {
-              const convId = await this.chat.createGroup(title, memberIds);
-              await this.router.navigate(['/tabs/social/chat', convId]);
-              return true;
-            } catch (e) {
-              void this.showToast(this.errorMessage(e), 'danger');
-              return false;
-            }
-          }
-        }
-      ]
-    });
-    await alert.present();
+    this.creatingGroup.set(true);
+    try {
+      const convId = await this.chat.createGroup(title, [...this.selectedGroupMemberIds]);
+      this.groupModalOpen.set(false);
+      await this.router.navigate(['/tabs/social/chat', convId]);
+    } catch (e) {
+      void this.showToast(this.errorMessage(e), 'danger');
+    } finally {
+      this.creatingGroup.set(false);
+    }
+  }
+
+  private async loadUsers(): Promise<void> {
+    const me = this.auth.currentUser();
+    if (!me) return;
+    this.loadingUsers.set(true);
+    try {
+      const items = await this.profiles.search(this.searchTerm);
+      this.users.set(items.filter((u) => u.id !== me.id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.loadingUsers.set(false);
+    }
   }
 
   private async showToast(

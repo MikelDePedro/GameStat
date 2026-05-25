@@ -7,7 +7,7 @@
 .game-overview,
 .review-card,
 .reviews-list {
-  padding: 20px;
+  padding: 18px;
 }
 
 .hero-card,
@@ -33,10 +33,6 @@
 }
 
 .eyebrow {
-  color: #60a5fa;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
   margin: 0 0 8px;
 }
 
@@ -47,7 +43,7 @@
 }
 
 .description {
-  color: #cbd5e1;
+  color: var(--app-text-muted);
   line-height: 1.6;
   margin: 14px 0 0;
 }
@@ -62,25 +58,25 @@
 .meta-card {
   padding: 14px;
   border-radius: 12px;
-  background: rgba(15, 30, 48, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(42, 37, 70, 0.58);
+  border: 1px solid rgba(196, 181, 253, 0.14);
 }
 
 .meta-card span {
   display: block;
-  color: #94a3b8;
+  color: var(--app-text-soft);
   font-size: 0.8rem;
   margin-bottom: 6px;
 }
 
 .detail-list p {
   margin: 0 0 10px;
-  color: #d8e1ec;
+  color: var(--app-text-muted);
   line-height: 1.5;
 }
 
 .detail-list a {
-  color: #93c5fd;
+  color: #ddd6fe;
 }
 
 .review-card,
@@ -89,12 +85,12 @@
 }
 
 .review-header p:last-child {
-  color: #cbd5e1;
+  color: var(--app-text-muted);
 }
 
 .form-item {
-  --background: rgba(15, 23, 42, 0.55);
-  --border-color: rgba(148, 163, 184, 0.16);
+  --background: rgba(27, 24, 46, 0.64);
+  --border-color: rgba(196, 181, 253, 0.16);
   --padding-start: 10px;
   --inner-padding-end: 10px;
   border-radius: 10px;
@@ -135,16 +131,16 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: rgba(96, 165, 250, 0.16);
-  color: #bfdbfe;
+  background: rgba(167, 139, 250, 0.18);
+  color: #ddd6fe;
   font-weight: 700;
 }
 
 .stored-review {
   padding: 16px;
   border-radius: 14px;
-  background: rgba(15, 30, 48, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(42, 37, 70, 0.58);
+  border: 1px solid rgba(196, 181, 253, 0.14);
   margin-bottom: 12px;
 }
 
@@ -166,7 +162,7 @@
 .stored-top p,
 .stored-review > p,
 .stored-review span {
-  color: #cbd5e1;
+  color: var(--app-text-muted);
 }
 
 .stored-review span {
