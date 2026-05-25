@@ -23,6 +23,7 @@ export interface ReviewItem {
   comment: string;
   author: string;
   createdAt: string;
+  createdAtTimestamp?: number;
 }
 
 // ---------- FEED SOCIAL ----------

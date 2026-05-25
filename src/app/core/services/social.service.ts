@@ -397,6 +397,7 @@ export class SocialService {
   // HELPERS
   // -------------------------------------------------------------------
   private mapReviewRow(row: ReviewRow): ReviewItem {
+    const createdAtTimestamp = new Date(row.created_at).getTime();
     return {
       id: row.id,
       gameId: row.rawg_id,
@@ -406,7 +407,8 @@ export class SocialService {
       rating: row.rating,
       comment: row.comment,
       author: row.author,
-      createdAt: this.formatDate(row.created_at)
+      createdAt: this.formatDate(row.created_at),
+      createdAtTimestamp: Number.isFinite(createdAtTimestamp) ? createdAtTimestamp : Date.now()
     };
   }
 

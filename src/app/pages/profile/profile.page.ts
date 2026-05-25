@@ -6,12 +6,15 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   IonAvatar,
   IonButton,
+  IonBadge,
   IonContent,
   IonIcon,
   IonInput,
   IonItem,
   IonLabel,
   IonSpinner,
+  IonSegment,
+  IonSegmentButton,
   IonText,
   IonTextarea,
   IonToast,
@@ -21,7 +24,8 @@ import { addIcons } from 'ionicons';
 import {
   chatbubbleEllipsesOutline,
   personAddOutline,
-  personRemoveOutline
+  personRemoveOutline,
+  star
 } from 'ionicons/icons';
 import {
   Subject,
@@ -44,6 +48,10 @@ import { GamesService } from '../../core/services/games.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { SocialService } from '../../core/services/social.service';
 
+type ActivityEntry =
+  | (SocialPost & { kind: 'post' })
+  | (ReviewItem & { kind: 'review' });
+
 @Component({
   standalone: true,
   imports: [
@@ -52,12 +60,15 @@ import { SocialService } from '../../core/services/social.service';
     RouterLink,
     IonAvatar,
     IonButton,
+    IonBadge,
     IonContent,
     IonIcon,
     IonInput,
     IonItem,
     IonLabel,
     IonSpinner,
+    IonSegment,
+    IonSegmentButton,
     IonText,
     IonTextarea,
     IonToast
@@ -154,21 +165,42 @@ import { SocialService } from '../../core/services/social.service';
           <ion-text color="danger" *ngIf="error()">{{ error() }}</ion-text>
         </section>
 
-        <section class="surface-card posts-card" *ngIf="userPosts().length">
-          <h2>Posts</h2>
-          <article class="mini-post" *ngFor="let post of userPosts()">
-            <p>{{ post.content }}</p>
-            <small>{{ post.createdAt }} · {{ post.likes }} likes · {{ post.comments }} comentarios</small>
-          </article>
-        </section>
+        <section class="surface-card activity-card" *ngIf="activity().length">
+          <div class="activity-top">
+            <div>
+              <h2>Actividad</h2>
+              <p class="activity-subtitle">Posts y reviews en una sola vista, con filtro rápido.</p>
+            </div>
+            <ion-segment [value]="activityFilter()" (ionChange)="setActivityFilter($event)">
+              <ion-segment-button value="all">Todo</ion-segment-button>
+              <ion-segment-button value="posts">Posts</ion-segment-button>
+              <ion-segment-button value="reviews">Reviews</ion-segment-button>
+            </ion-segment>
+          </div>
 
-        <section class="surface-card posts-card" *ngIf="userReviews().length">
-          <h2>Reviews</h2>
-          <article class="mini-post" *ngFor="let r of userReviews()">
-            <strong>{{ r.game }} — {{ r.rating }}/10</strong>
-            <p>{{ r.comment }}</p>
-            <small>{{ r.createdAt }}</small>
-          </article>
+          <div class="activity-list">
+            <article class="activity-item" *ngFor="let item of activityShown(); trackBy: trackByActivity">
+              <header [class.post-item]="item.kind === 'post'" [class.review-item]="item.kind === 'review'">
+                <ion-badge [color]="item.kind === 'review' ? 'secondary' : 'primary'">
+                  {{ item.kind === 'review' ? 'Review' : 'Post' }}
+                </ion-badge>
+                <strong *ngIf="item.kind === 'post'">{{ item.author }}</strong>
+                <strong *ngIf="item.kind === 'review'">{{ item.game }} · {{ item.rating }}/10</strong>
+                <small>{{ item.createdAt }}</small>
+              </header>
+
+              <p *ngIf="item.kind === 'post'">{{ item.content }}</p>
+              <p *ngIf="item.kind === 'review'">{{ item.comment }}</p>
+
+              <footer *ngIf="item.kind === 'post'" class="activity-meta">
+                <small>{{ item.likes }} likes · {{ item.comments }} comentarios</small>
+              </footer>
+              <footer *ngIf="item.kind === 'review'" class="activity-meta review-meta">
+                <ion-icon name="star"></ion-icon>
+                <small>Reseña publicada</small>
+              </footer>
+            </article>
+          </div>
         </section>
 
         <div class="loading" *ngIf="loading()">
@@ -193,6 +225,15 @@ export class ProfilePage implements OnInit {
   readonly profile = signal<UserProfile | null>(null);
   readonly userPosts = signal<SocialPost[]>([]);
   readonly userReviews = signal<ReviewItem[]>([]);
+  readonly activity = signal<ActivityEntry[]>([]);
+  readonly activityFilter = signal<'all' | 'posts' | 'reviews'>('all');
+  readonly activityShown = computed(() => {
+    const filter = this.activityFilter();
+    const items = this.activity();
+    if (filter === 'posts') return items.filter((item) => item.kind === 'post');
+    if (filter === 'reviews') return items.filter((item) => item.kind === 'review');
+    return items;
+  });
   readonly stats = signal<FollowStats>({ followers: 0, following: 0, isFollowing: false });
   readonly loading = signal(false);
   readonly error = signal('');
@@ -224,7 +265,7 @@ export class ProfilePage implements OnInit {
     private readonly router: Router,
     private readonly toastCtrl: ToastController
   ) {
-    addIcons({ personAddOutline, personRemoveOutline, chatbubbleEllipsesOutline });
+    addIcons({ personAddOutline, personRemoveOutline, chatbubbleEllipsesOutline, star });
 
     // Sincroniza el formulario cuando cambia el perfil mostrado
     effect(() => {
@@ -281,6 +322,17 @@ export class ProfilePage implements OnInit {
     return game.id;
   }
 
+  trackByActivity(_: number, item: ActivityEntry): string {
+    return `${item.kind}:${item.id}`;
+  }
+
+  setActivityFilter(event: CustomEvent): void {
+    const value = event.detail?.value;
+    if (value === 'all' || value === 'posts' || value === 'reviews') {
+      this.activityFilter.set(value);
+    }
+  }
+
   private async loadProfile(userId: string | null): Promise<void> {
     this.loading.set(true);
     this.error.set('');
@@ -306,6 +358,10 @@ export class ProfilePage implements OnInit {
       ]);
       this.userPosts.set(posts);
       this.userReviews.set(reviews);
+      this.activity.set([
+        ...posts.map((post) => ({ ...post, kind: 'post' as const })),
+        ...reviews.map((review) => ({ ...review, kind: 'review' as const }))
+      ].sort((a, b) => (b.createdAtTimestamp ?? Date.now()) - (a.createdAtTimestamp ?? Date.now())));
       this.stats.set(stats);
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'No se pudo cargar el perfil.');
