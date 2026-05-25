@@ -47,6 +47,63 @@ ion-content {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
+.game-field {
+  position: relative;
+  min-width: 0;
+}
+.game-suggestions {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgb(15, 23, 42);
+  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.42);
+}
+.game-suggestion {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+.game-suggestion:hover,
+.game-suggestion:focus-visible {
+  outline: none;
+  background: rgba(56, 189, 248, 0.16);
+}
+.game-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.game-meta {
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 12px;
+}
+.suggestion-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: rgba(226, 232, 240, 0.82);
+  font-size: 13px;
+}
+.suggestion-state ion-spinner {
+  width: 18px;
+  height: 18px;
+}
+.suggestion-state.error {
+  color: #fecaca;
+}
 .range-wrap {
   padding: 12px 8px;
 }

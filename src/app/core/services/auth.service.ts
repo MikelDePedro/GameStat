@@ -333,6 +333,10 @@ export class AuthService {
       return 'El registro por email esta deshabilitado en Supabase.';
     }
 
+    if (message.includes('rate limit')) {
+      return 'Supabase ha limitado temporalmente el envio de emails. Espera unos minutos antes de intentarlo otra vez.';
+    }
+
     return error.message;
   }
 

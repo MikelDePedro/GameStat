@@ -37,20 +37,18 @@ interface SocialPostRow {
   created_at: string;
 }
 
-type ProfileJoin = { name: string | null; avatar: string | null };
-
 interface SocialCommentRow {
   id: string;
   post_id: string;
   user_id: string;
   content: string;
   created_at: string;
-  profiles?: ProfileJoin | ProfileJoin[] | null;
 }
 
-function firstProfile(p: ProfileJoin | ProfileJoin[] | null | undefined): ProfileJoin | null {
-  if (!p) return null;
-  return Array.isArray(p) ? (p[0] ?? null) : p;
+interface ProfileSummaryRow {
+  id: string;
+  name: string | null;
+  avatar: string | null;
 }
 
 export interface CreateReviewPayload {
@@ -323,20 +321,25 @@ export class SocialService {
     const client = this.supabaseService.assertConfigured();
     const { data, error } = await client
       .from('social_post_comments')
-      .select('id, post_id, user_id, content, created_at, profiles(name, avatar)')
+      .select('id, post_id, user_id, content, created_at')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
     if (error) throw new Error(this.mapError(error.message, 'social_post_comments'));
 
-    return ((data as unknown as SocialCommentRow[] | null) ?? []).map((row) => {
-      const prof = firstProfile(row.profiles);
+    const comments = (data as SocialCommentRow[] | null) ?? [];
+    const profilesById = await this.loadProfilesById(comments.map((row) => row.user_id));
+
+    return comments.map((row) => {
+      const prof = profilesById.get(row.user_id);
+      const author = prof?.name ?? 'Usuario';
+
       return {
         id: row.id,
         postId: row.post_id,
         userId: row.user_id,
-        author: prof?.name ?? 'Usuario',
-        authorAvatar: prof?.avatar || this.initials(prof?.name ?? 'Usuario'),
+        author,
+        authorAvatar: prof?.avatar || this.initials(author),
         content: row.content,
         createdAt: this.formatDate(row.created_at)
       };
@@ -418,6 +421,31 @@ export class SocialService {
       rating: p.rating,
       author: p.author.trim()
     };
+  }
+
+  private async loadProfilesById(userIds: string[]): Promise<Map<string, ProfileSummaryRow>> {
+    const uniqueIds = [...new Set(userIds.filter(Boolean))];
+    const profilesById = new Map<string, ProfileSummaryRow>();
+
+    if (!uniqueIds.length) {
+      return profilesById;
+    }
+
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client
+      .from('profiles')
+      .select('id, name, avatar')
+      .in('id', uniqueIds);
+
+    if (error) {
+      throw new Error(this.mapError(error.message, 'profiles'));
+    }
+
+    for (const profile of (data as ProfileSummaryRow[] | null) ?? []) {
+      profilesById.set(profile.id, profile);
+    }
+
+    return profilesById;
   }
 
   private formatDate(value: string): string {

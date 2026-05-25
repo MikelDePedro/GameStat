@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import {
   IonButton,
@@ -9,11 +10,25 @@ import {
   IonLabel,
   IonList,
   IonRange,
+  IonSpinner,
   IonText,
   IonTextarea
 } from '@ionic/angular/standalone';
+import {
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  map,
+  of,
+  switchMap,
+  tap
+} from 'rxjs';
 
+import { RawgGame } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
+import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
 
 @Component({
@@ -28,6 +43,7 @@ import { SocialService } from '../../core/services/social.service';
     IonLabel,
     IonList,
     IonRange,
+    IonSpinner,
     IonText,
     IonTextarea
   ],
@@ -54,10 +70,40 @@ import { SocialService } from '../../core/services/social.service';
         <section class="surface-card form-card">
           <h1>Nueva review</h1>
           <div class="review-fields">
-            <ion-item>
-              <ion-label position="stacked">Juego</ion-label>
-              <ion-input [(ngModel)]="form.game"></ion-input>
-            </ion-item>
+            <div class="game-field">
+              <ion-item>
+                <ion-label position="stacked">Juego</ion-label>
+                <ion-input
+                  [(ngModel)]="form.game"
+                  autocomplete="off"
+                  (ngModelChange)="onGameInput($event)">
+                </ion-input>
+              </ion-item>
+
+              <div class="game-suggestions" *ngIf="showGameSuggestions()">
+                <button
+                  type="button"
+                  class="game-suggestion"
+                  *ngFor="let game of gameSuggestions; trackBy: trackByGameId"
+                  (click)="selectGame(game)">
+                  <span class="game-title">{{ game.name }}</span>
+                  <span class="game-meta">{{ game.released || 'Sin fecha' }}</span>
+                </button>
+
+                <div class="suggestion-state" *ngIf="gameSearchLoading">
+                  <ion-spinner name="crescent"></ion-spinner>
+                  <span>Buscando juegos...</span>
+                </div>
+
+                <div class="suggestion-state" *ngIf="!gameSearchLoading && !gameSuggestions.length && !gameSearchError">
+                  No hay juegos con ese nombre.
+                </div>
+
+                <div class="suggestion-state error" *ngIf="gameSearchError">
+                  {{ gameSearchError }}
+                </div>
+              </div>
+            </div>
             <ion-item>
               <ion-label position="stacked">Titulo</ion-label>
               <ion-input [(ngModel)]="form.title" placeholder="Tu titular para la review"></ion-input>
@@ -89,6 +135,9 @@ import { SocialService } from '../../core/services/social.service';
   `
 })
 export class ReviewPage {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly gameSearchTerms$ = new Subject<string>();
+
   form = {
     game: '',
     title: '',
@@ -98,11 +147,50 @@ export class ReviewPage {
   };
   saving = false;
   errorMessage = '';
+  selectedGame: RawgGame | null = null;
+  gameSuggestions: RawgGame[] = [];
+  gameSearchLoading = false;
+  gameSearchError = '';
+  gameSuggestionsOpen = false;
 
   constructor(
     public readonly social: SocialService,
-    private readonly auth: AuthService
-  ) {}
+    private readonly auth: AuthService,
+    private readonly gamesService: GamesService
+  ) {
+    this.setupGameSearchStream();
+  }
+
+  onGameInput(value: string): void {
+    const cleanValue = value.trim();
+
+    if (this.selectedGame?.name !== cleanValue) {
+      this.selectedGame = null;
+    }
+
+    this.gameSuggestionsOpen = cleanValue.length >= 2;
+    this.gameSearchTerms$.next(cleanValue);
+  }
+
+  selectGame(game: RawgGame): void {
+    this.selectedGame = game;
+    this.form.game = game.name;
+    this.gameSuggestions = [];
+    this.gameSearchError = '';
+    this.gameSuggestionsOpen = false;
+  }
+
+  showGameSuggestions(): boolean {
+    return (
+      this.gameSuggestionsOpen &&
+      Boolean(this.form.game.trim()) &&
+      !this.selectedGame
+    );
+  }
+
+  trackByGameId(_: number, game: RawgGame): number {
+    return game.id;
+  }
 
   async addReview(): Promise<void> {
     const user = this.auth.currentUser();
@@ -115,14 +203,19 @@ export class ReviewPage {
       return;
     }
 
+    if (!this.selectedGame) {
+      this.errorMessage = 'Selecciona un juego del desplegable para confirmar que existe.';
+      return;
+    }
+
     this.errorMessage = '';
     this.saving = true;
 
     try {
       await this.social.addReview({
         userId: user.id,
-        gameId: null,
-        game: this.form.game,
+        gameId: this.selectedGame.id,
+        game: this.selectedGame.name,
         title: this.form.title,
         subtitle: this.form.subtitle,
         comment: this.form.comment,
@@ -137,11 +230,55 @@ export class ReviewPage {
         comment: '',
         rating: 7
       };
+      this.selectedGame = null;
+      this.gameSuggestions = [];
+      this.gameSuggestionsOpen = false;
     } catch (error) {
       this.errorMessage =
         error instanceof Error ? error.message : 'No se pudo guardar la review.';
     } finally {
       this.saving = false;
     }
+  }
+
+  private setupGameSearchStream(): void {
+    this.gameSearchTerms$
+      .pipe(
+        map((term) => term.trim()),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((term) => {
+          this.gameSearchError = '';
+
+          if (term.length < 2) {
+            this.gameSuggestions = [];
+            this.gameSearchLoading = false;
+            this.gameSuggestionsOpen = false;
+            return;
+          }
+
+          this.gameSearchLoading = true;
+        }),
+        switchMap((term) => {
+          if (term.length < 2) {
+            return of([]);
+          }
+
+          return this.gamesService.searchGames(term, 1, 8).pipe(
+            map((page) => page.items),
+            catchError((error: Error) => {
+              this.gameSearchError = error.message;
+              return of([]);
+            }),
+            finalize(() => {
+              this.gameSearchLoading = false;
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((games) => {
+        this.gameSuggestions = games;
+      });
   }
 }
