@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -22,11 +23,24 @@ import {
   personAddOutline,
   personRemoveOutline
 } from 'ionicons/icons';
+import {
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  map,
+  of,
+  switchMap,
+  tap
+} from 'rxjs';
 
+import { RawgGame } from '../../core/models/rawg.models';
 import { FollowStats, ReviewItem, SocialPost, UserProfile } from '../../models';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
 import { FollowService } from '../../core/services/follow.service';
+import { GamesService } from '../../core/services/games.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { SocialService } from '../../core/services/social.service';
 
@@ -93,10 +107,40 @@ import { SocialService } from '../../core/services/social.service';
             <ion-label position="stacked">Nombre</ion-label>
             <ion-input [(ngModel)]="editName"></ion-input>
           </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Juego favorito</ion-label>
-            <ion-input [(ngModel)]="editFavoriteGame"></ion-input>
-          </ion-item>
+          <div class="favorite-game-field">
+            <ion-item>
+              <ion-label position="stacked">Juego favorito</ion-label>
+              <ion-input
+                [(ngModel)]="editFavoriteGame"
+                autocomplete="off"
+                (ngModelChange)="onFavoriteGameInput($event)">
+              </ion-input>
+            </ion-item>
+
+            <div class="game-suggestions" *ngIf="showFavoriteGameSuggestions()">
+              <button
+                type="button"
+                class="game-suggestion"
+                *ngFor="let game of favoriteGameSuggestions; trackBy: trackByGameId"
+                (click)="selectFavoriteGame(game)">
+                <span class="game-title">{{ game.name }}</span>
+                <span class="game-meta">{{ game.released || 'Sin fecha' }}</span>
+              </button>
+
+              <div class="suggestion-state" *ngIf="favoriteGameSearchLoading">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Buscando juegos...</span>
+              </div>
+
+              <div class="suggestion-state" *ngIf="!favoriteGameSearchLoading && !favoriteGameSuggestions.length && !favoriteGameSearchError">
+                No hay juegos con ese nombre.
+              </div>
+
+              <div class="suggestion-state error" *ngIf="favoriteGameSearchError">
+                {{ favoriteGameSearchError }}
+              </div>
+            </div>
+          </div>
           <ion-item>
             <ion-label position="stacked">Bio</ion-label>
             <ion-textarea [(ngModel)]="editBio" autoGrow="true"></ion-textarea>
@@ -143,6 +187,9 @@ import { SocialService } from '../../core/services/social.service';
   `
 })
 export class ProfilePage implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly favoriteGameSearchTerms$ = new Subject<string>();
+
   readonly profile = signal<UserProfile | null>(null);
   readonly userPosts = signal<SocialPost[]>([]);
   readonly userReviews = signal<ReviewItem[]>([]);
@@ -156,15 +203,22 @@ export class ProfilePage implements OnInit {
 
   editName = '';
   editFavoriteGame = '';
+  originalFavoriteGame = '';
   editBio = '';
   saving = false;
   showSavedToast = false;
+  selectedFavoriteGame: RawgGame | null = null;
+  favoriteGameSuggestions: RawgGame[] = [];
+  favoriteGameSearchLoading = false;
+  favoriteGameSearchError = '';
+  favoriteGameSuggestionsOpen = false;
 
   constructor(
     private readonly auth: AuthService,
     private readonly profiles: ProfileService,
     private readonly social: SocialService,
     private readonly follows: FollowService,
+    private readonly gamesService: GamesService,
     private readonly chat: ChatService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -178,9 +232,15 @@ export class ProfilePage implements OnInit {
       if (p && this.isMine()) {
         this.editName = p.name;
         this.editFavoriteGame = p.favoriteGame;
+        this.originalFavoriteGame = p.favoriteGame;
+        this.selectedFavoriteGame = null;
+        this.favoriteGameSuggestions = [];
+        this.favoriteGameSuggestionsOpen = false;
         this.editBio = p.bio;
       }
     });
+
+    this.setupFavoriteGameSearch();
   }
 
   async ngOnInit(): Promise<void> {
@@ -188,6 +248,37 @@ export class ProfilePage implements OnInit {
       const userId = params.get('userId');
       await this.loadProfile(userId);
     });
+  }
+
+  onFavoriteGameInput(value: string): void {
+    const cleanValue = value.trim();
+
+    if (this.selectedFavoriteGame?.name !== cleanValue) {
+      this.selectedFavoriteGame = null;
+    }
+
+    this.favoriteGameSuggestionsOpen = cleanValue.length >= 2;
+    this.favoriteGameSearchTerms$.next(cleanValue);
+  }
+
+  selectFavoriteGame(game: RawgGame): void {
+    this.selectedFavoriteGame = game;
+    this.editFavoriteGame = game.name;
+    this.favoriteGameSuggestions = [];
+    this.favoriteGameSearchError = '';
+    this.favoriteGameSuggestionsOpen = false;
+  }
+
+  showFavoriteGameSuggestions(): boolean {
+    return (
+      this.favoriteGameSuggestionsOpen &&
+      Boolean(this.editFavoriteGame.trim()) &&
+      !this.selectedFavoriteGame
+    );
+  }
+
+  trackByGameId(_: number, game: RawgGame): number {
+    return game.id;
   }
 
   private async loadProfile(userId: string | null): Promise<void> {
@@ -252,6 +343,16 @@ export class ProfilePage implements OnInit {
   async save(): Promise<void> {
     const current = this.profile();
     if (!current || !this.isMine()) return;
+
+    const cleanFavoriteGame = this.editFavoriteGame.trim();
+    const favoriteGameChanged =
+      cleanFavoriteGame.toLowerCase() !== this.originalFavoriteGame.trim().toLowerCase();
+
+    if (favoriteGameChanged && cleanFavoriteGame && !this.selectedFavoriteGame) {
+      this.error.set('Selecciona el juego favorito del desplegable para confirmar que existe.');
+      return;
+    }
+
     this.saving = true;
     this.error.set('');
     try {
@@ -282,5 +383,46 @@ export class ProfilePage implements OnInit {
   private async toast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, duration: 2200, color, position: 'top' });
     await t.present();
+  }
+
+  private setupFavoriteGameSearch(): void {
+    this.favoriteGameSearchTerms$
+      .pipe(
+        map((term) => term.trim()),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((term) => {
+          this.favoriteGameSearchError = '';
+
+          if (term.length < 2) {
+            this.favoriteGameSuggestions = [];
+            this.favoriteGameSearchLoading = false;
+            this.favoriteGameSuggestionsOpen = false;
+            return;
+          }
+
+          this.favoriteGameSearchLoading = true;
+        }),
+        switchMap((term) => {
+          if (term.length < 2) {
+            return of([]);
+          }
+
+          return this.gamesService.searchGames(term, 1, 8).pipe(
+            map((page) => page.items),
+            catchError((error: Error) => {
+              this.favoriteGameSearchError = error.message;
+              return of([]);
+            }),
+            finalize(() => {
+              this.favoriteGameSearchLoading = false;
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((games) => {
+        this.favoriteGameSuggestions = games;
+      });
   }
 }

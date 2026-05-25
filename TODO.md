@@ -80,10 +80,3 @@ Ejecutar en este orden desde el SQL editor:
 6. `supabase/chat.sql`
 7. `supabase/realtime.sql`
 8. (Opcional) crear usuarios demo en Auth y luego `supabase/seed_demo.sql` con los UUID reales.
-
-
-
-Hay que estilar mejor la aplicacion entera: Tiene que tener un estilo oscuro con toques morados y la letra se tiene que entender perfectamente en todos los lados. Ademas hay que seguir una jerarquia para los tamaños de las letras (titulo, subtitulo, etc.) Tiene que quedar armonico y moderno.
-En la pagina review no puede ser que la seccion de nueva review ocupe mas que el panel de reviews. Y la seccion de nueva review tiene que estar arriba.
-En feed lo mismo, la seccion de crear nuevo post tiene que ser mas pequeño.
-Se cortan un poco los nombres de los tabs en la seccion de elegir tabs arriba del todo en todas las paginas. Arreglarlo. Hay que añadir un indicador en el tab en el que nos encontremos. Marcandolo de otro color.

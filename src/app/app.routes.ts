@@ -40,6 +40,11 @@ export const appRoutes: Routes = [
         loadComponent: () => import('./pages/review/review.page').then((m) => m.ReviewPage)
       },
       {
+        path: 'review/:reviewId',
+        loadComponent: () =>
+          import('./pages/review-detail/review-detail.page').then((m) => m.ReviewDetailPage)
+      },
+      {
         path: 'games',
         loadComponent: () => import('./pages/games/games.page').then((m) => m.GamesPage)
       },

@@ -1,5 +1,7 @@
 ::ng-deep ion-tabs > ion-router-outlet {
   pointer-events: none !important;
+  margin-left: 118px !important;
+  width: calc(100% - 118px) !important;
 }
 
 ::ng-deep ion-tabs > ion-router-outlet > * {
@@ -7,31 +9,55 @@
 }
 
 ::ng-deep ion-tab-bar {
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  z-index: 100 !important;
   display: flex !important;
-  justify-content: space-around !important;
-  align-items: center !important;
-  padding: 8px 0 !important;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+  flex-direction: column !important;
+  justify-content: space-evenly !important;
+  align-items: stretch !important;
+  width: 118px !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 14px 10px !important;
+  border-right: 1px solid var(--app-border) !important;
+  border-bottom: 0 !important;
   pointer-events: auto !important;
-  background: transparent !important;
+  background: linear-gradient(180deg, rgba(15, 13, 29, 0.98), rgba(12, 10, 22, 0.96)) !important;
+  box-shadow: 16px 0 36px rgba(3, 2, 10, 0.3) !important;
+  gap: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+}
+
+::ng-deep ion-tab-bar::-webkit-scrollbar {
+  display: none !important;
 }
 
 ::ng-deep ion-tab-button {
-  flex: 1 !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  padding: 6px 2px !important;
-  gap: 2px !important;
-  --color: #94a3b8 !important;
+  padding: 7px 6px 8px !important;
+  gap: 3px !important;
+  --color: var(--app-text-soft) !important;
   cursor: pointer !important;
-  transition: transform 0.18s ease-in-out, background 0.18s !important;
+  transition: transform 0.18s ease-in-out, background 0.18s, color 0.18s !important;
   border-radius: 10px !important;
   margin: 0 !important;
   background: transparent !important;
   pointer-events: auto !important;
   user-select: none !important;
+  overflow: visible !important;
 }
 
 ::ng-deep ion-tab-button * {
@@ -43,22 +69,44 @@
   z-index: 1 !important;
 }
 
+::ng-deep ion-tab-button::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 6px !important;
+  right: auto !important;
+  top: 12px !important;
+  bottom: 12px !important;
+  width: 4px !important;
+  height: auto !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #c4b5fd, #8b5cf6) !important;
+  opacity: 0 !important;
+  transform: scaleY(0.5) !important;
+  transition: opacity 0.18s ease, transform 0.18s ease !important;
+}
+
 ::ng-deep ion-tab-button ion-icon {
-  font-size: 26px !important;
+  font-size: 20px !important;
   line-height: 1 !important;
   transition: transform 0.18s ease-in-out, color 0.18s !important;
-  color: #94a3b8 !important;
+  color: var(--app-text-soft) !important;
 }
 
 ::ng-deep ion-tab-button ion-label {
+  display: block !important;
+  max-width: 100% !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
   transition: color 0.18s ease-in-out !important;
-  color: #94a3b8 !important;
+  color: var(--app-text-soft) !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
 ::ng-deep ion-tab-button:hover {
-  background: rgba(255,255,255,0.02) !important;
+  background: rgba(167, 139, 250, 0.1) !important;
   transform: translateY(-2px) !important;
 }
 
@@ -67,24 +115,66 @@
 }
 
 ::ng-deep ion-tab-button:active {
-  background: rgba(255,255,255,0.03) !important;
+  background: rgba(167, 139, 250, 0.14) !important;
 }
 
 ::ng-deep ion-tab-button:active ion-icon {
   transform: scale(0.98) !important;
 }
 
-::ng-deep ion-tab-button.ion-tab-button--selected {
-  --color: #60a5fa !important;
-  background: linear-gradient(180deg, rgba(96,165,250,0.12), rgba(96,165,250,0.06)) !important;
+::ng-deep ion-tab-button.ion-tab-button--selected,
+::ng-deep ion-tab-button.tab-selected,
+::ng-deep ion-tab-button[aria-selected='true'] {
+  --color: #f4f0ff !important;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.22), rgba(139, 92, 246, 0.12)) !important;
+  border: 1px solid rgba(196, 181, 253, 0.22) !important;
 }
 
-::ng-deep ion-tab-button.ion-tab-button--selected ion-icon {
-  color: #60a5fa !important;
+::ng-deep ion-tab-button.ion-tab-button--selected ion-icon,
+::ng-deep ion-tab-button.tab-selected ion-icon,
+::ng-deep ion-tab-button[aria-selected='true'] ion-icon {
+  color: #ddd6fe !important;
   transform: translateY(-2px) scale(1.06) !important;
 }
 
-::ng-deep ion-tab-button.ion-tab-button--selected ion-label {
-  color: #60a5fa !important;
-  font-weight: 700 !important;
+::ng-deep ion-tab-button.ion-tab-button--selected ion-label,
+::ng-deep ion-tab-button.tab-selected ion-label,
+::ng-deep ion-tab-button[aria-selected='true'] ion-label {
+  color: #f4f0ff !important;
+  font-weight: 800 !important;
+}
+
+::ng-deep ion-tab-button.ion-tab-button--selected::after,
+::ng-deep ion-tab-button.tab-selected::after,
+::ng-deep ion-tab-button[aria-selected='true']::after {
+  opacity: 1 !important;
+  transform: scaleY(1) !important;
+}
+
+@media (max-width: 720px) {
+  ::ng-deep ion-tabs > ion-router-outlet {
+    margin-left: 88px !important;
+    width: calc(100% - 88px) !important;
+  }
+
+  ::ng-deep ion-tab-bar {
+    width: 88px !important;
+    padding: 10px 6px !important;
+    gap: 0 !important;
+  }
+
+  ::ng-deep ion-tab-button {
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+    padding: 6px 4px 7px !important;
+  }
+
+  ::ng-deep ion-tab-button ion-icon {
+    font-size: 20px !important;
+  }
+
+  ::ng-deep ion-tab-button ion-label {
+    font-size: 11px !important;
+  }
 }

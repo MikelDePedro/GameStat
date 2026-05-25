@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
@@ -36,6 +37,7 @@ import { SocialService } from '../../core/services/social.service';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     IonButton,
     IonContent,
     IonInput,
@@ -51,22 +53,6 @@ import { SocialService } from '../../core/services/social.service';
   template: `
     <ion-content [scrollY]="false">
       <div class="page-shell page">
-        <section class="surface-card review-section">
-          <div class="review-scroll">
-            <ion-list class="review-list">
-              <ion-item lines="none" *ngFor="let review of social.reviews()">
-                <ion-label>
-                  <h2>{{ review.game }} - {{ review.rating }}/10</h2>
-                  <h3>{{ review.title }}</h3>
-                  <p *ngIf="review.subtitle">{{ review.subtitle }}</p>
-                  <p>{{ review.comment }}</p>
-                  <p>{{ review.author }} - {{ review.createdAt }}</p>
-                </ion-label>
-              </ion-item>
-            </ion-list>
-          </div>
-        </section>
-
         <section class="surface-card form-card">
           <h1>Nueva review</h1>
           <div class="review-fields">
@@ -113,22 +99,53 @@ import { SocialService } from '../../core/services/social.service';
               <ion-input [(ngModel)]="form.subtitle" placeholder="Resumen corto de tu opinion"></ion-input>
             </ion-item>
           </div>
-          <ion-item>
-            <ion-label position="stacked">Comentario</ion-label>
-            <ion-textarea [(ngModel)]="form.comment" autoGrow="true"></ion-textarea>
-          </ion-item>
-          <div class="range-wrap">
-            <ion-text>Valoracion: {{ form.rating }}/10</ion-text>
-            <ion-range min="1" max="10" step="1" snaps="true" [(ngModel)]="form.rating"></ion-range>
-          </div>
+          <div class="review-bottom-row">
+            <ion-item>
+              <ion-label position="stacked">Comentario</ion-label>
+              <ion-textarea [(ngModel)]="form.comment" autoGrow="true"></ion-textarea>
+            </ion-item>
 
-          <ion-button expand="block" [disabled]="saving" (click)="addReview()">
-            {{ saving ? 'Guardando...' : 'Guardar review' }}
-          </ion-button>
+            <div class="range-wrap">
+              <ion-text>Valoracion: {{ form.rating }}/10</ion-text>
+              <ion-range min="1" max="10" step="1" snaps="true" [(ngModel)]="form.rating"></ion-range>
+            </div>
+
+            <ion-button [disabled]="saving" (click)="addReview()">
+              {{ saving ? 'Guardando...' : 'Guardar review' }}
+            </ion-button>
+          </div>
 
           <ion-text color="danger" *ngIf="errorMessage">
             <p>{{ errorMessage }}</p>
           </ion-text>
+        </section>
+
+        <section class="surface-card review-section">
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Reviews</p>
+              <h2>Ultimas opiniones</h2>
+            </div>
+            <span>{{ social.reviews().length }}</span>
+          </header>
+
+          <div class="review-scroll">
+            <ion-list class="review-list">
+              <ion-item
+                lines="none"
+                button
+                [routerLink]="['/tabs/review', review.id]"
+                *ngFor="let review of social.reviews()">
+                <ion-label>
+                  <h2>{{ review.game }} - {{ review.rating }}/10</h2>
+                  <h3>{{ review.title }}</h3>
+                  <p *ngIf="review.subtitle">{{ review.subtitle }}</p>
+                  <p>{{ review.comment }}</p>
+                  <p>{{ review.author }} - {{ review.createdAt }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </div>
         </section>
       </div>
     </ion-content>

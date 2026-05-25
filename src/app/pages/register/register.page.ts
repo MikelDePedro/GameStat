@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -9,12 +10,26 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonSpinner,
   IonText,
   IonTitle,
   IonToolbar
 } from '@ionic/angular/standalone';
+import {
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  map,
+  of,
+  switchMap,
+  tap
+} from 'rxjs';
 
+import { RawgGame } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
+import { GamesService } from '../../core/services/games.service';
 
 @Component({
   standalone: true,
@@ -28,6 +43,7 @@ import { AuthService } from '../../core/services/auth.service';
     IonInput,
     IonItem,
     IonLabel,
+    IonSpinner,
     IonText,
     IonTitle,
     IonToolbar
@@ -77,6 +93,40 @@ import { AuthService } from '../../core/services/auth.service';
               <ion-label position="stacked">Repite contraseña</ion-label>
               <ion-input type="password"></ion-input>
             </ion-item>
+            <div class="favorite-game-field">
+              <ion-item class="form-item">
+                <ion-label position="stacked">Juego favorito</ion-label>
+                <ion-input
+                  [(ngModel)]="form.favoriteGame"
+                  autocomplete="off"
+                  (ngModelChange)="onFavoriteGameInput($event)">
+                </ion-input>
+              </ion-item>
+
+              <div class="game-suggestions" *ngIf="showFavoriteGameSuggestions()">
+                <button
+                  type="button"
+                  class="game-suggestion"
+                  *ngFor="let game of favoriteGameSuggestions; trackBy: trackByGameId"
+                  (click)="selectFavoriteGame(game)">
+                  <span class="game-title">{{ game.name }}</span>
+                  <span class="game-meta">{{ game.released || 'Sin fecha' }}</span>
+                </button>
+
+                <div class="suggestion-state" *ngIf="favoriteGameSearchLoading">
+                  <ion-spinner name="crescent"></ion-spinner>
+                  <span>Buscando juegos...</span>
+                </div>
+
+                <div class="suggestion-state" *ngIf="!favoriteGameSearchLoading && !favoriteGameSuggestions.length && !favoriteGameSearchError">
+                  No hay juegos con ese nombre.
+                </div>
+
+                <div class="suggestion-state error" *ngIf="favoriteGameSearchError">
+                  {{ favoriteGameSearchError }}
+                </div>
+              </div>
+            </div>
           </div>
 
           <ion-button expand="block" class="primary-gradient" [disabled]="loading" (click)="submit()">
@@ -97,6 +147,9 @@ import { AuthService } from '../../core/services/auth.service';
   `
 })
 export class RegisterPage {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly favoriteGameSearchTerms$ = new Subject<string>();
+
   form = {
     name: '',
     email: '',
@@ -107,12 +160,60 @@ export class RegisterPage {
   error = '';
   message = '';
   loading = false;
+  selectedFavoriteGame: RawgGame | null = null;
+  favoriteGameSuggestions: RawgGame[] = [];
+  favoriteGameSearchLoading = false;
+  favoriteGameSearchError = '';
+  favoriteGameSuggestionsOpen = false;
 
-  constructor(private readonly auth: AuthService, private readonly router: Router) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly router: Router,
+    private readonly gamesService: GamesService
+  ) {
+    this.setupFavoriteGameSearch();
+  }
+
+  onFavoriteGameInput(value: string): void {
+    const cleanValue = value.trim();
+
+    if (this.selectedFavoriteGame?.name !== cleanValue) {
+      this.selectedFavoriteGame = null;
+    }
+
+    this.favoriteGameSuggestionsOpen = cleanValue.length >= 2;
+    this.favoriteGameSearchTerms$.next(cleanValue);
+  }
+
+  selectFavoriteGame(game: RawgGame): void {
+    this.selectedFavoriteGame = game;
+    this.form.favoriteGame = game.name;
+    this.favoriteGameSuggestions = [];
+    this.favoriteGameSearchError = '';
+    this.favoriteGameSuggestionsOpen = false;
+  }
+
+  showFavoriteGameSuggestions(): boolean {
+    return (
+      this.favoriteGameSuggestionsOpen &&
+      Boolean(this.form.favoriteGame.trim()) &&
+      !this.selectedFavoriteGame
+    );
+  }
+
+  trackByGameId(_: number, game: RawgGame): number {
+    return game.id;
+  }
 
   async submit(): Promise<void> {
     this.error = '';
     this.message = '';
+
+    if (!this.selectedFavoriteGame) {
+      this.error = 'Selecciona tu juego favorito del desplegable para confirmar que existe.';
+      return;
+    }
+
     this.loading = true;
 
     try {
@@ -131,5 +232,46 @@ export class RegisterPage {
     } finally {
       this.loading = false;
     }
+  }
+
+  private setupFavoriteGameSearch(): void {
+    this.favoriteGameSearchTerms$
+      .pipe(
+        map((term) => term.trim()),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((term) => {
+          this.favoriteGameSearchError = '';
+
+          if (term.length < 2) {
+            this.favoriteGameSuggestions = [];
+            this.favoriteGameSearchLoading = false;
+            this.favoriteGameSuggestionsOpen = false;
+            return;
+          }
+
+          this.favoriteGameSearchLoading = true;
+        }),
+        switchMap((term) => {
+          if (term.length < 2) {
+            return of([]);
+          }
+
+          return this.gamesService.searchGames(term, 1, 8).pipe(
+            map((page) => page.items),
+            catchError((error: Error) => {
+              this.favoriteGameSearchError = error.message;
+              return of([]);
+            }),
+            finalize(() => {
+              this.favoriteGameSearchLoading = false;
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((games) => {
+        this.favoriteGameSuggestions = games;
+      });
   }
 }

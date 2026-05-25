@@ -9,8 +9,8 @@ ion-content {
 
 .page {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 20px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
@@ -20,9 +20,7 @@ ion-content {
 }
 .form-card,
 .review-section {
-  padding: 20px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.9);
+  padding: 16px;
 }
 .review-section,
 .form-card {
@@ -33,6 +31,38 @@ ion-content {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+.form-card {
+  display: grid;
+  gap: 8px;
+}
+.form-card h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.section-header p,
+.section-header h2 {
+  margin: 0;
+}
+.section-header span {
+  min-width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #f4f0ff;
+  background: rgba(167, 139, 250, 0.2);
+  border: 1px solid rgba(196, 181, 253, 0.22);
+  font-weight: 800;
 }
 .review-scroll {
   height: 100%;
@@ -41,11 +71,51 @@ ion-content {
 }
 .review-list {
   background: transparent;
+  display: grid;
+  gap: 10px;
+}
+.review-list ion-item {
+  --background: rgba(42, 37, 70, 0.52);
+  --background-hover: rgba(63, 55, 100, 0.66);
+  --border-color: rgba(196, 181, 253, 0.14);
+  border: 1px solid rgba(196, 181, 253, 0.14);
+  border-radius: 12px;
+  margin: 0;
+  cursor: pointer;
+  transition: border-color 0.16s ease, transform 0.16s ease;
+}
+.review-list ion-item:hover {
+  border-color: rgba(196, 181, 253, 0.3);
+  transform: translateY(-1px);
+}
+.review-list h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.review-list h3 {
+  margin: 0 0 4px;
+  color: #efe9ff;
+}
+.review-list p {
+  margin: 4px 0 0;
 }
 .review-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+}
+.review-fields ion-item,
+.review-bottom-row ion-item {
+  margin-bottom: 0;
+}
+.review-bottom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px 150px;
+  align-items: end;
+  gap: 8px;
+}
+.review-bottom-row ion-textarea {
+  min-height: 56px;
 }
 .game-field {
   position: relative;
@@ -59,10 +129,10 @@ ion-content {
   right: 0;
   max-height: 260px;
   overflow-y: auto;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid rgba(196, 181, 253, 0.28);
   border-radius: 10px;
-  background: rgb(15, 23, 42);
-  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.42);
+  background: rgb(20, 18, 35);
+  box-shadow: 0 18px 36px rgba(3, 2, 10, 0.48);
 }
 .game-suggestion {
   display: grid;
@@ -70,7 +140,7 @@ ion-content {
   gap: 3px;
   padding: 11px 12px;
   border: 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  border-bottom: 1px solid rgba(196, 181, 253, 0.16);
   background: transparent;
   color: #fff;
   text-align: left;
@@ -79,14 +149,14 @@ ion-content {
 .game-suggestion:hover,
 .game-suggestion:focus-visible {
   outline: none;
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(167, 139, 250, 0.16);
 }
 .game-title {
   font-size: 14px;
   font-weight: 700;
 }
 .game-meta {
-  color: rgba(226, 232, 240, 0.72);
+  color: var(--app-text-soft);
   font-size: 12px;
 }
 .suggestion-state {
@@ -94,7 +164,7 @@ ion-content {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  color: rgba(226, 232, 240, 0.82);
+  color: var(--app-text-muted);
   font-size: 13px;
 }
 .suggestion-state ion-spinner {
@@ -105,13 +175,25 @@ ion-content {
   color: #fecaca;
 }
 .range-wrap {
-  padding: 12px 8px;
+  padding: 0 4px;
+}
+.range-wrap ion-text {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+.range-wrap ion-range {
+  padding: 0;
+}
+.review-bottom-row ion-button {
+  margin: 0;
+  min-height: 44px;
 }
 .review-item {
   margin-top: 12px;
   padding: 14px;
   border-radius: 12px;
-  background: rgba(30, 41, 59, 0.75);
+  background: rgba(42, 37, 70, 0.58);
 }
 ion-item {
   --background: transparent;
@@ -125,10 +207,11 @@ ion-item {
 
   .review-section,
   .form-card {
-    padding: 14px;
+    padding: 12px;
   }
 
-  .review-fields {
+  .review-fields,
+  .review-bottom-row {
     grid-template-columns: 1fr;
     gap: 0;
   }

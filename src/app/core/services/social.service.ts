@@ -188,6 +188,23 @@ export class SocialService {
     return ((data as ReviewRow[] | null) ?? []).map((row) => this.mapReviewRow(row));
   }
 
+  async getReviewById(reviewId: string): Promise<ReviewItem> {
+    const cached = this.reviews().find((review) => review.id === reviewId);
+    if (cached) {
+      return cached;
+    }
+
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client
+      .from('game_reviews')
+      .select('id, user_id, rawg_id, game, title, subtitle, comment, rating, author, created_at')
+      .eq('id', reviewId)
+      .single<ReviewRow>();
+
+    if (error) throw new Error(this.mapError(error.message, 'game_reviews'));
+    return this.mapReviewRow(data);
+  }
+
   // -------------------------------------------------------------------
   // POSTS
   // -------------------------------------------------------------------
