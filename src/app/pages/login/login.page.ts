@@ -57,27 +57,29 @@ import { AuthService } from '../../core/services/auth.service';
         </section>
 
         <section class="surface-card auth-card">
-          <h2>Bienvenido de vuelta</h2>
-          <p class="helper">Accede a tus habitos y registros sociales.</p>
+          <form (ngSubmit)="submit()">
+            <h2>Bienvenido de vuelta</h2>
+            <p class="helper">Entra con tu correo y contraseña para seguir donde lo dejaste.</p>
 
-          <div class="form-fields">
-            <ion-item class="form-item">
-              <ion-label position="stacked">Nick o email</ion-label>
-              <ion-input [(ngModel)]="email" type="email" placeholder=""></ion-input>
-            </ion-item>
+            <div class="form-fields">
+              <ion-item class="form-item">
+                <ion-label position="stacked">Correo electrónico</ion-label>
+                <ion-input [(ngModel)]="email" name="email" type="email" autocomplete="email" inputmode="email"></ion-input>
+              </ion-item>
 
-            <ion-item class="form-item">
-              <ion-label position="stacked">Contraseña</ion-label>
-              <ion-input [(ngModel)]="password" type="password" placeholder=""></ion-input>
-            </ion-item>
-          </div>
+              <ion-item class="form-item">
+                <ion-label position="stacked">Contraseña</ion-label>
+                <ion-input [(ngModel)]="password" name="password" type="password" autocomplete="current-password"></ion-input>
+              </ion-item>
+            </div>
 
-          <div class="actions-row">
-            <a class="forgot" routerLink="/forgot">He olvidado mi contraseña</a>
-            <ion-button expand="block" class="primary-gradient" [disabled]="loading" (click)="submit()">
-              {{ loading ? 'Entrando...' : 'Entrar' }}
-            </ion-button>
-          </div>
+            <div class="actions-row">
+              <a class="forgot" routerLink="/forgot">He olvidado mi contraseña</a>
+              <ion-button expand="block" class="primary-gradient" type="submit" [disabled]="loading">
+                {{ loading ? 'Entrando...' : 'Entrar' }}
+              </ion-button>
+            </div>
+          </form>
 
           <ion-text color="danger" *ngIf="error">
             <p class="feedback">{{ error }}</p>

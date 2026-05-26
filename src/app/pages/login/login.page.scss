@@ -5,7 +5,7 @@
   --ion-color-secondary: #8b5cf6;
   --auth-bg: #070812;
 
-  padding: 36px 24px 56px;
+  padding: 24px 16px 44px;
   display: grid;
   gap: 22px;
   max-width: 1200px;
@@ -18,8 +18,8 @@
 }
 
 .auth-hero {
-  padding: 48px 40px;
-  margin-top: 24px;
+  padding: 28px 24px;
+  margin-top: 18px;
   background: linear-gradient(135deg, var(--auth-bg) 0%, rgba(var(--ion-color-primary-rgb),0.06) 45%, rgba(var(--ion-color-primary-rgb),0.04) 100%);
   position: relative;
   color: #fff;
@@ -92,7 +92,7 @@
 }
 
 .auth-card {
-  padding: 32px;
+  padding: 24px;
   background: rgba(8,10,14,0.92);
   border: 1px solid rgba(255,255,255,0.04);
   box-shadow: 0 18px 50px rgba(2,6,23,0.6);
@@ -201,9 +201,33 @@ ion-label {
   .auth-layout {
     grid-template-columns: 1.15fr 0.85fr;
     align-items: start;
+    padding: 32px 24px 56px;
   }
 
   .auth-card {
     margin-top: 24px;
+  }
+
+  .auth-hero {
+    padding: 48px 40px;
+    min-height: 420px;
+  }
+
+  .auth-card {
+    padding: 32px;
+  }
+}
+
+@media (max-width: 680px) {
+  .hero-badges {
+    flex-direction: column;
+  }
+
+  .actions-row .forgot {
+    align-self: flex-start;
+  }
+
+  .actions-row ion-button {
+    width: 100%;
   }
 }

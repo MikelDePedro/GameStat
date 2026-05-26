@@ -83,6 +83,7 @@
   gap: 4px;
   padding: 0 12px 12px;
   margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .loading-state,
@@ -102,6 +103,14 @@
 @media (max-width: 768px) {
   .games-grid {
     grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions ion-button {
+    flex: 1 1 100%;
   }
 
   .cover {

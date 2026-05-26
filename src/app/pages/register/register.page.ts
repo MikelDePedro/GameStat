@@ -73,65 +73,68 @@ import { GamesService } from '../../core/services/games.service';
         </section>
 
         <section class="surface-card auth-card">
-          <h2>Crea tu cuenta</h2>
-          <p class="helper">Empieza a registrar y compartir tus habitos.</p>
+          <form (ngSubmit)="submit()">
+            <h2>Crea tu cuenta</h2>
+            <p class="helper">Empieza a registrar tus juegos, compartir tus gustos y encontrar gente con tu misma afición.</p>
 
-          <div class="form-fields">
-            <ion-item class="form-item">
-              <ion-label position="stacked">Nick</ion-label>
-              <ion-input [(ngModel)]="form.name"></ion-input>
-            </ion-item>
-            <ion-item class="form-item">
-              <ion-label position="stacked">Email</ion-label>
-              <ion-input [(ngModel)]="form.email" type="email"></ion-input>
-            </ion-item>
-            <ion-item class="form-item">
-              <ion-label position="stacked">Contraseña</ion-label>
-              <ion-input [(ngModel)]="form.password" type="password"></ion-input>
-            </ion-item>
-            <ion-item class="form-item">
-              <ion-label position="stacked">Repite contraseña</ion-label>
-              <ion-input type="password"></ion-input>
-            </ion-item>
-            <div class="favorite-game-field">
+            <div class="form-fields">
               <ion-item class="form-item">
-                <ion-label position="stacked">Juego favorito</ion-label>
-                <ion-input
-                  [(ngModel)]="form.favoriteGame"
-                  autocomplete="off"
-                  (ngModelChange)="onFavoriteGameInput($event)">
-                </ion-input>
+                <ion-label position="stacked">Nick</ion-label>
+                <ion-input [(ngModel)]="form.name" name="name" autocomplete="nickname"></ion-input>
               </ion-item>
+              <ion-item class="form-item">
+                <ion-label position="stacked">Email</ion-label>
+                <ion-input [(ngModel)]="form.email" name="email" type="email" autocomplete="email"></ion-input>
+              </ion-item>
+              <ion-item class="form-item">
+                <ion-label position="stacked">Contraseña</ion-label>
+                <ion-input [(ngModel)]="form.password" name="password" type="password" autocomplete="new-password"></ion-input>
+              </ion-item>
+              <ion-item class="form-item">
+                <ion-label position="stacked">Repite contraseña</ion-label>
+                <ion-input name="confirmPassword" type="password" autocomplete="new-password"></ion-input>
+              </ion-item>
+              <div class="favorite-game-field">
+                <ion-item class="form-item">
+                  <ion-label position="stacked">Juego favorito</ion-label>
+                  <ion-input
+                    [(ngModel)]="form.favoriteGame"
+                    name="favoriteGame"
+                    autocomplete="off"
+                    (ngModelChange)="onFavoriteGameInput($event)">
+                  </ion-input>
+                </ion-item>
 
-              <div class="game-suggestions" *ngIf="showFavoriteGameSuggestions()">
-                <button
-                  type="button"
-                  class="game-suggestion"
-                  *ngFor="let game of favoriteGameSuggestions; trackBy: trackByGameId"
-                  (click)="selectFavoriteGame(game)">
-                  <span class="game-title">{{ game.name }}</span>
-                  <span class="game-meta">{{ game.released || 'Sin fecha' }}</span>
-                </button>
+                <div class="game-suggestions" *ngIf="showFavoriteGameSuggestions()">
+                  <button
+                    type="button"
+                    class="game-suggestion"
+                    *ngFor="let game of favoriteGameSuggestions; trackBy: trackByGameId"
+                    (click)="selectFavoriteGame(game)">
+                    <span class="game-title">{{ game.name }}</span>
+                    <span class="game-meta">{{ game.released || 'Sin fecha' }}</span>
+                  </button>
 
-                <div class="suggestion-state" *ngIf="favoriteGameSearchLoading">
-                  <ion-spinner name="crescent"></ion-spinner>
-                  <span>Buscando juegos...</span>
-                </div>
+                  <div class="suggestion-state" *ngIf="favoriteGameSearchLoading">
+                    <ion-spinner name="crescent"></ion-spinner>
+                    <span>Buscando juegos...</span>
+                  </div>
 
-                <div class="suggestion-state" *ngIf="!favoriteGameSearchLoading && !favoriteGameSuggestions.length && !favoriteGameSearchError">
-                  No hay juegos con ese nombre.
-                </div>
+                  <div class="suggestion-state" *ngIf="!favoriteGameSearchLoading && !favoriteGameSuggestions.length && !favoriteGameSearchError">
+                    No hay juegos con ese nombre.
+                  </div>
 
-                <div class="suggestion-state error" *ngIf="favoriteGameSearchError">
-                  {{ favoriteGameSearchError }}
+                  <div class="suggestion-state error" *ngIf="favoriteGameSearchError">
+                    {{ favoriteGameSearchError }}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <ion-button expand="block" class="primary-gradient" [disabled]="loading" (click)="submit()">
-            {{ loading ? 'Creando cuenta...' : 'Registrarme' }}
-          </ion-button>
+            <ion-button expand="block" class="primary-gradient" type="submit" [disabled]="loading">
+              {{ loading ? 'Creando cuenta...' : 'Registrarme' }}
+            </ion-button>
+          </form>
 
           <ion-text color="success" *ngIf="message">
             <p class="feedback">{{ message }}</p>

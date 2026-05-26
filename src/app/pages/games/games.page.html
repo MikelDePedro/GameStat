@@ -70,8 +70,9 @@
               [title]="isFavorite(game.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'">
               <ion-icon 
                 [name]="isFavorite(game.id) ? 'heart' : 'heart-outline'" 
-                slot="icon-only"
+                slot="start"
                 [style.color]="isFavorite(game.id) ? '#ef4444' : 'inherit'"></ion-icon>
+              {{ isFavorite(game.id) ? 'Guardado' : 'Guardar' }}
             </ion-button>
           </div>
         </article>
