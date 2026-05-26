@@ -24,8 +24,12 @@
           <p>{{ favoritesError }}</p>
         </ion-text>
 
+        <ion-button *ngIf="favoritesError" fill="outline" size="small" (click)="retryFavorites()">
+          Reintentar favoritos
+        </ion-button>
+
         <ion-text color="medium" *ngIf="!supabaseSyncEnabled">
-          <p>Favoritos en Supabase desactivados temporalmente.</p>
+          <p>Favoritos en Supabase desactivados. Configura Supabase en environment.ts</p>
         </ion-text>
       </section>
 
@@ -61,8 +65,13 @@
               fill="clear"
               size="small"
               [disabled]="isFavoriteLoading(game.id)"
-              (click)="$event.stopPropagation(); toggleFavorite(game)">
-              <ion-icon [name]="isFavorite(game.id) ? 'heart' : 'heart-outline'" slot="icon-only"></ion-icon>
+              [color]="isFavorite(game.id) ? 'danger' : 'medium'"
+              (click)="$event.stopPropagation(); toggleFavorite(game)"
+              [title]="isFavorite(game.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'">
+              <ion-icon 
+                [name]="isFavorite(game.id) ? 'heart' : 'heart-outline'" 
+                slot="icon-only"
+                [style.color]="isFavorite(game.id) ? '#ef4444' : 'inherit'"></ion-icon>
             </ion-button>
           </div>
         </article>

@@ -116,21 +116,45 @@
   min-width: 0;
 }
 
+::ng-deep ion-header {
+  margin-left: 130px;
+  width: calc(100% - 130px);
+}
+
+::ng-deep ion-header ion-buttons[slot="start"] {
+  margin-right: auto !important;
+}
+
+::ng-deep ion-content {
+  margin-left: 130px;
+  width: calc(100% - 130px);
+}
+
 ion-footer ion-toolbar {
   --padding-start: 18px;
   --padding-end: 12px;
-  margin-left: 118px;
-  width: calc(100% - 118px);
+  margin-left: 130px;
+  width: calc(100% - 130px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 720px) {
   .composer {
     width: 100%;
   }
 
+  ::ng-deep ion-header {
+    margin-left: 90px;
+    width: calc(100% - 90px);
+  }
+
+  ::ng-deep ion-content {
+    margin-left: 90px;
+    width: calc(100% - 90px);
+  }
+
   ion-footer ion-toolbar {
-    margin-left: 88px;
-    width: calc(100% - 88px);
+    margin-left: 90px;
+    width: calc(100% - 90px);
   }
 }
 

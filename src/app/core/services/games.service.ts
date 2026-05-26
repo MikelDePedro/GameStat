@@ -117,6 +117,46 @@ export class GamesService {
     );
   }
 
+  getFavoriteGamesWithDetails(userId: string): Observable<RawgGame[]> {
+    if (!this.supportsSupabaseSync()) {
+      return of([]);
+    }
+
+    return defer(() => {
+      const client = this.requireSupabaseClient();
+
+      return from(
+        client
+          .from('favorite_games')
+          .select('rawg_id, name, background_image, rating, released')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+      );
+    }).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          throw new Error(this.mapSupabaseError(error.message));
+        }
+
+        return (data as Array<{ rawg_id: number; name: string; background_image?: string; rating?: number; released?: string }> | null)?.map((item) => ({
+          id: item.rawg_id,
+          name: item.name,
+          background_image: item.background_image || null,
+          rating: item.rating || 0,
+          ratings_count: 0,
+          metacritic: null,
+          released: item.released || null,
+          slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+          genres: [],
+          platforms: []
+        } as RawgGame)) ?? [];
+      }),
+      catchError((error) =>
+        this.handlePlainError(error, 'No se pudieron cargar los favoritos desde Supabase.')
+      )
+    );
+  }
+
   saveFavoriteGame(userId: string, game: RawgGame): Observable<void> {
     if (!this.supportsSupabaseSync()) {
       return of(void 0);

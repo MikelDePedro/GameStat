@@ -203,6 +203,45 @@ type ActivityEntry =
           </div>
         </section>
 
+        <section class="surface-card favorites-card">
+          <div class="favorites-header">
+            <div>
+              <h2>Juegos Favoritos</h2>
+              <p class="activity-subtitle">Coleccion de juegos guardados.</p>
+            </div>
+            <span class="favorite-count" *ngIf="favoriteGames().length > 0">{{ favoriteGames().length }}</span>
+          </div>
+
+          <div class="favorites-grid" *ngIf="favoriteGames().length > 0">
+            <article
+              class="favorite-game-item"
+              *ngFor="let game of favoriteGames(); trackBy: trackByGameId"
+              [routerLink]="['/tabs/game', game.id]">
+              <div class="game-cover">
+                <img
+                  [src]="game.background_image || 'https://via.placeholder.com/400x240?text=Sin+imagen'"
+                  [alt]="game.name"
+                  loading="lazy" />
+              </div>
+              <div class="game-info">
+                <h3>{{ game.name }}</h3>
+                <div class="game-meta">
+                  <span *ngIf="game.rating > 0" class="rating">
+                    <ion-icon name="star"></ion-icon>
+                    {{ game.rating | number: '1.1-1' }}
+                  </span>
+                  <span *ngIf="game.released" class="released">{{ game.released }}</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="empty-favorites" *ngIf="favoriteGames().length === 0">
+            <p>Aun no hay juegos guardados como favoritos.</p>
+            <p class="subtitle">Guarda juegos desde la pagina de juegos usando el icono de corazon.</p>
+          </div>
+        </section>
+
         <div class="loading" *ngIf="loading()">
           <ion-spinner name="crescent"></ion-spinner>
         </div>
@@ -225,6 +264,7 @@ export class ProfilePage implements OnInit {
   readonly profile = signal<UserProfile | null>(null);
   readonly userPosts = signal<SocialPost[]>([]);
   readonly userReviews = signal<ReviewItem[]>([]);
+  readonly favoriteGames = signal<RawgGame[]>([]);
   readonly activity = signal<ActivityEntry[]>([]);
   readonly activityFilter = signal<'all' | 'posts' | 'reviews'>('all');
   readonly activityShown = computed(() => {
@@ -234,6 +274,7 @@ export class ProfilePage implements OnInit {
     if (filter === 'reviews') return items.filter((item) => item.kind === 'review');
     return items;
   });
+  readonly hasFavoriteGames = computed(() => this.favoriteGames().length > 0);
   readonly stats = signal<FollowStats>({ followers: 0, following: 0, isFollowing: false });
   readonly loading = signal(false);
   readonly error = signal('');
@@ -351,13 +392,15 @@ export class ProfilePage implements OnInit {
       }
       this.profile.set(target);
 
-      const [posts, reviews, stats] = await Promise.all([
+      const [posts, reviews, stats, favs] = await Promise.all([
         this.social.getPostsByUser(target.id),
         this.social.getReviewsForUser(target.id),
-        this.follows.getStats(target.id)
+        this.follows.getStats(target.id),
+        this.gamesService.getFavoriteGamesWithDetails(target.id).toPromise().catch(() => [])
       ]);
       this.userPosts.set(posts);
       this.userReviews.set(reviews);
+      this.favoriteGames.set(favs || []);
       this.activity.set([
         ...posts.map((post) => ({ ...post, kind: 'post' as const })),
         ...reviews.map((review) => ({ ...review, kind: 'review' as const }))

@@ -207,6 +207,11 @@ export class GamesPage implements OnInit {
     return this.favoriteLoadingIds.has(gameId);
   }
 
+  retryFavorites(): void {
+    this.favoritesError = '';
+    this.loadFavoriteIds();
+  }
+
   trackByGameId(_: number, game: RawgGame): number {
     return game.id;
   }
