@@ -106,7 +106,7 @@ import { RatingStarsComponent } from '../../shared';
             </ion-item>
 
             <div class="range-wrap">
-              <ion-text>Valoracion: {{ form.rating }}/10</ion-text>
+              <ion-text>Valoración: {{ form.rating }}/10</ion-text>
               <app-rating-stars
                 [value]="form.rating"
                 [readonly]="false"

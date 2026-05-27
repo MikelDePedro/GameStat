@@ -10,12 +10,11 @@ import {
 
 import { ReviewItem, ReviewStats } from '../../models';
 import { SocialService } from '../../core/services/social.service';
-import { ReviewStatsCardComponent } from '../../shared';
-import { RatingStarsComponent } from '../../shared';
+import { ReviewStatsCardComponent } from '../../shared/components/review-stats-card/review-stats-card.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, ReviewStatsCardComponent, RatingStarsComponent, IonButton, IonContent, IonSpinner, IonText],
+  imports: [CommonModule, RouterLink, IonButton, IonContent, IonSpinner, IonText, ReviewStatsCardComponent],
   styleUrls: ['./review-detail.page.scss'],
   template: `
     <ion-content>
@@ -29,7 +28,7 @@ import { RatingStarsComponent } from '../../shared';
               <h1>{{ r.title }}</h1>
               <p class="subtitle" *ngIf="r.subtitle">{{ r.subtitle }}</p>
             </div>
-            <app-rating-stars [value]="r.rating" [readonly]="true" [showValue]="true"></app-rating-stars>
+            <span>{{ r.rating }}/10</span>
           </header>
 
           <div class="game-line">
@@ -40,13 +39,11 @@ import { RatingStarsComponent } from '../../shared';
           <p class="comment">{{ r.comment }}</p>
         </section>
 
-        <section class="surface-card" *ngIf="reviewStatsLoading() || reviewStats()">
-          <app-review-stats-card
-            [stats]="reviewStats()"
-            [title]="'Estadisticas del juego'"
-            [emptyText]="reviewStatsError() || 'No hay estadisticas disponibles para esta review.'">
-          </app-review-stats-card>
-        </section>
+        <app-review-stats-card
+          *ngIf="stats() as s"
+          [stats]="s"
+          title="Distribución del juego">
+        </app-review-stats-card>
 
         <div class="loading" *ngIf="loading()">
           <ion-spinner name="crescent"></ion-spinner>
@@ -61,11 +58,9 @@ import { RatingStarsComponent } from '../../shared';
 })
 export class ReviewDetailPage implements OnInit {
   readonly review = signal<ReviewItem | null>(null);
-  readonly reviewStats = signal<ReviewStats | null>(null);
   readonly loading = signal(false);
-  readonly reviewStatsLoading = signal(false);
-  readonly reviewStatsError = signal('');
   readonly error = signal('');
+  readonly stats = signal<ReviewStats | null>(null);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -84,28 +79,17 @@ export class ReviewDetailPage implements OnInit {
     try {
       const review = await this.social.getReviewById(reviewId);
       this.review.set(review);
-      if (review.gameId !== null) {
-        await this.loadReviewStats(review.gameId);
+      if (review?.gameId) {
+        try {
+          this.stats.set(await this.social.getReviewStats(review.gameId));
+        } catch {
+          this.stats.set(null);
+        }
       }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No se pudo cargar la review.');
     } finally {
       this.loading.set(false);
-    }
-  }
-
-  private async loadReviewStats(gameId: number): Promise<void> {
-    this.reviewStatsLoading.set(true);
-    this.reviewStatsError.set('');
-    try {
-      this.reviewStats.set(await this.social.getReviewStats(gameId));
-    } catch (error) {
-      this.reviewStats.set(null);
-      this.reviewStatsError.set(
-        error instanceof Error ? error.message : 'No se pudieron cargar las estadisticas.'
-      );
-    } finally {
-      this.reviewStatsLoading.set(false);
     }
   }
 }

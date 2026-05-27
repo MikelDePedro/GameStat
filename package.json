@@ -8,7 +8,8 @@
     "test": "ng test",
     "cap:sync": "npm run build && npx cap sync",
     "cap:add:android": "npx cap add android",
-    "apk:debug": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug"
+    "apk:debug": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug",
+    "apk:release": "npm run build && npx cap sync android && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
     "@angular/animations": "^17.3.0",
@@ -20,8 +21,15 @@
     "@angular/platform-browser-dynamic": "^17.3.0",
     "@angular/router": "^17.3.0",
     "@capacitor/android": "^7.2.0",
+    "@capacitor/app": "^7.1.2",
     "@capacitor/cli": "^7.6.0",
     "@capacitor/core": "^7.2.0",
+    "@capacitor/haptics": "^7.0.5",
+    "@capacitor/keyboard": "^7.0.6",
+    "@capacitor/network": "^7.0.4",
+    "@capacitor/preferences": "^7.0.4",
+    "@capacitor/share": "^7.0.4",
+    "@capacitor/status-bar": "^7.0.6",
     "@ionic/angular": "^8.0.0",
     "@supabase/supabase-js": "^2.99.0",
     "ionicons": "^7.4.0",

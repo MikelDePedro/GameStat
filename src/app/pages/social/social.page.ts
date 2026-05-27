@@ -106,9 +106,24 @@ type Tab = 'private' | 'group';
               </ion-avatar>
               <ion-label>
                 <h2>{{ conv.title }}</h2>
-                <p>{{ conv.type === 'group' ? conv.participants.length + ' miembros' : 'Chat privado' }}</p>
+                <p>
+                  {{ conv.type === 'group'
+                      ? (conv.memberCount || conv.participants.length) + ' miembros'
+                      : 'Chat privado' }}
+                </p>
+                <p class="last-message" *ngIf="conv.lastMessageContent">
+                  {{ conv.lastMessageContent }}
+                </p>
               </ion-label>
-              <ion-badge slot="end" color="medium">{{ conv.lastMessageAt }}</ion-badge>
+              <ion-badge
+                slot="end"
+                *ngIf="conv.unreadCount > 0"
+                color="primary">
+                {{ conv.unreadCount }}
+              </ion-badge>
+              <ion-badge slot="end" color="medium" *ngIf="conv.unreadCount === 0">
+                {{ conv.lastMessageAt }}
+              </ion-badge>
             </ion-item>
           </ion-list>
         </section>

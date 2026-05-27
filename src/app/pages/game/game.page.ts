@@ -8,6 +8,7 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
+  IonRange,
   IonSpinner,
   IonText,
   IonTextarea
@@ -16,15 +17,13 @@ import { addIcons } from 'ionicons';
 import { heart, heartOutline } from 'ionicons/icons';
 import { finalize } from 'rxjs';
 
-import { ReviewItem } from '../../models';
+import { ReviewItem, ReviewStats } from '../../models';
 import { RawgGameDetails } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
-import { ReviewStatsCardComponent } from '../../shared';
-import { RatingStarsComponent } from '../../shared';
-import { ReviewStats } from '../../models';
+import { ReviewStatsCardComponent } from '../../shared/components/review-stats-card/review-stats-card.component';
 
 @Component({
   standalone: true,
@@ -32,16 +31,16 @@ import { ReviewStats } from '../../models';
     CommonModule,
     FormsModule,
     RouterLink,
-    ReviewStatsCardComponent,
-    RatingStarsComponent,
     IonButton,
     IonContent,
     IonIcon,
     IonItem,
     IonLabel,
+    IonRange,
     IonSpinner,
     IonText,
-    IonTextarea
+    IonTextarea,
+    ReviewStatsCardComponent
   ],
   styleUrls: ['./game.page.scss'],
   template: `
@@ -115,14 +114,6 @@ import { ReviewStats } from '../../models';
             </div>
           </section>
 
-          <section class="surface-card" *ngIf="reviewStatsLoading || reviewStats">
-            <app-review-stats-card
-              [stats]="reviewStats"
-              [title]="'Estadisticas de reviews del juego'"
-              [emptyText]="reviewStatsError || 'Aun no hay reviews de este juego.'">
-            </app-review-stats-card>
-          </section>
-
           <section class="surface-card review-card">
             <div class="review-header">
               <p class="eyebrow">Review del videojuego</p>
@@ -159,13 +150,7 @@ import { ReviewStats } from '../../models';
                   </ion-button>
                 </div>
               </div>
-              <app-rating-stars
-                [value]="form.rating"
-                [readonly]="false"
-                [showValue]="true"
-                [max]="10"
-                (valueChange)="form.rating = $event">
-              </app-rating-stars>
+              <ion-range min="1" max="10" step="1" snaps="true" [(ngModel)]="form.rating"></ion-range>
             </div>
 
             <ion-button expand="block" [disabled]="saving" (click)="saveReview()">
@@ -189,12 +174,18 @@ import { ReviewStats } from '../../models';
             <article class="stored-review" *ngFor="let review of gameReviews">
               <div class="stored-top">
                 <h3>{{ review.author }}</h3>
-                <app-rating-stars [value]="review.rating" [readonly]="true" [showValue]="true"></app-rating-stars>
+                <strong>{{ review.rating }}/10</strong>
               </div>
               <p>{{ review.comment }}</p>
               <span>{{ review.createdAt }}</span>
             </article>
           </section>
+
+          <app-review-stats-card
+            *ngIf="reviewStats"
+            [stats]="reviewStats"
+            title="Distribución de puntuaciones">
+          </app-review-stats-card>
         </ng-container>
       </div>
     </ion-content>
@@ -211,8 +202,6 @@ export class GamePage implements OnInit {
   reviewError = '';
   reviewMessage = '';
   reviewStats: ReviewStats | null = null;
-  reviewStatsLoading = false;
-  reviewStatsError = '';
 
   form = {
     comment: '',
@@ -277,12 +266,20 @@ export class GamePage implements OnInit {
       .subscribe({
         next: (game) => {
           this.game = game;
-          void this.loadReviewStats(game.id);
+          void this.loadStats(game.id);
         },
         error: (error: Error) => {
           this.errorMessage = error.message;
         }
       });
+  }
+
+  private async loadStats(rawgId: number): Promise<void> {
+    try {
+      this.reviewStats = await this.social.getReviewStats(rawgId);
+    } catch {
+      this.reviewStats = null;
+    }
   }
 
   async saveReview(): Promise<void> {
@@ -329,18 +326,5 @@ export class GamePage implements OnInit {
 
   updateRating(delta: number): void {
     this.form.rating = Math.max(1, Math.min(10, this.form.rating + delta));
-  }
-
-  private async loadReviewStats(gameId: number): Promise<void> {
-    this.reviewStatsLoading = true;
-    this.reviewStatsError = '';
-    try {
-      this.reviewStats = await this.social.getReviewStats(gameId);
-    } catch (error) {
-      this.reviewStats = null;
-      this.reviewStatsError = error instanceof Error ? error.message : 'No se pudieron cargar las estadisticas.';
-    } finally {
-      this.reviewStatsLoading = false;
-    }
   }
 }
