@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
+  IonBadge,
   IonIcon,
   IonLabel,
   IonRouterOutlet,
@@ -18,11 +20,14 @@ import {
 } from 'ionicons/icons';
 
 import { AppHeaderComponent } from '../../core/components/app-header/app-header.component';
+import { ChatService } from '../../core/services/chat.service';
 
 @Component({
   standalone: true,
   imports: [
+    CommonModule,
     AppHeaderComponent,
+    IonBadge,
     IonIcon,
     IonLabel,
     IonRouterOutlet,
@@ -57,6 +62,9 @@ import { AppHeaderComponent } from '../../core/components/app-header/app-header.
         <ion-tab-button tab="social" href="/tabs/social">
           <ion-icon name="chatbubbles-outline"></ion-icon>
           <ion-label>Social</ion-label>
+          <ion-badge *ngIf="chat.totalUnread() > 0" color="danger">
+            {{ chat.totalUnread() }}
+          </ion-badge>
         </ion-tab-button>
         <ion-tab-button tab="users" href="/tabs/users">
           <ion-icon name="people-outline"></ion-icon>
@@ -67,7 +75,7 @@ import { AppHeaderComponent } from '../../core/components/app-header/app-header.
   `
 })
 export class TabsPage {
-  constructor() {
+  constructor(public readonly chat: ChatService) {
     addIcons({
       homeOutline,
       starOutline,

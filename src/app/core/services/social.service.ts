@@ -3,6 +3,8 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 
 import { ReviewItem, ReviewStats, SocialComment, SocialPost, UserReviewStats } from '../../models';
 import { AuthService } from './auth.service';
+import { NetworkService } from './network.service';
+import { OfflineQueueService, OutboxAction } from './offline-queue.service';
 import { SupabaseService } from './supabase.service';
 
 const FEED_PAGE_SIZE = 20;
@@ -99,8 +101,12 @@ export class SocialService {
 
   constructor(
     private readonly supabaseService: SupabaseService,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    private readonly network: NetworkService,
+    private readonly offlineQueue: OfflineQueueService
   ) {
+    this.offlineQueue.register('create_post', (action) => this.executeCreatePost(action));
+    this.offlineQueue.register('toggle_like', (action) => this.executeToggleLike(action));
     if (this.supabaseService.isConfigured) {
       void this.bootstrap();
     }
@@ -385,6 +391,32 @@ export class SocialService {
     const clean = content.trim();
     if (!clean) return;
 
+    // Offline: encolar y mostrar post pendiente.
+    if (!this.network.online()) {
+      const tempId = `pending-${crypto.randomUUID()}`;
+      const nowIso = new Date().toISOString();
+      const optimistic: SocialPost = {
+        id: tempId,
+        userId: me.id,
+        author: me.name,
+        authorAvatar: me.avatar || this.initials(me.name),
+        content: clean,
+        likes: 0,
+        comments: 0,
+        liked: false,
+        createdAt: this.formatDate(nowIso),
+        createdAtTimestamp: Date.now(),
+        pending: true
+      };
+      this.posts.update((items) => [optimistic, ...items]);
+      await this.offlineQueue.enqueue({
+        id: tempId,
+        type: 'create_post',
+        payload: { content: clean, tempId }
+      });
+      return;
+    }
+
     const client = this.supabaseService.assertConfigured();
     const { data, error } = await client
       .from('social_posts')
@@ -409,6 +441,39 @@ export class SocialService {
     this.posts.update((items) => [optimistic, ...items.filter((p) => p.id !== optimistic.id)]);
   }
 
+  private async executeCreatePost(action: OutboxAction): Promise<void> {
+    const content = action.payload['content'] as string;
+    const tempId = action.payload['tempId'] as string;
+    const me = this.auth.currentUser();
+    if (!me) throw new Error('No hay sesion activa.');
+
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client
+      .from('social_posts')
+      .insert({ user_id: me.id, content })
+      .select('id, user_id, content, created_at')
+      .single<SocialPostRow>();
+    if (error) throw new Error(error.message);
+
+    const real: SocialPost = {
+      id: data.id,
+      userId: data.user_id,
+      author: me.name,
+      authorAvatar: me.avatar || this.initials(me.name),
+      content: data.content,
+      likes: 0,
+      comments: 0,
+      liked: false,
+      createdAt: this.formatDate(data.created_at),
+      createdAtTimestamp: new Date(data.created_at).getTime()
+    };
+    // Sustituir el placeholder por el post real.
+    this.posts.update((items) => {
+      const without = items.filter((p) => p.id !== tempId && p.id !== real.id);
+      return [real, ...without];
+    });
+  }
+
   async deletePost(postId: string): Promise<void> {
     const client = this.supabaseService.assertConfigured();
     const { error } = await client.from('social_posts').delete().eq('id', postId);
@@ -419,13 +484,12 @@ export class SocialService {
   async toggleLike(postId: string): Promise<void> {
     const me = this.auth.currentUser();
     if (!me) return;
-    const client = this.supabaseService.assertConfigured();
 
     const current = this.posts().find((p) => p.id === postId);
     const prevLiked = current?.liked ?? false;
     const prevCount = current?.likes ?? 0;
 
-    // UI optimista
+    // UI optimista (aplicar siempre)
     this.posts.update((items) =>
       items.map((p) =>
         p.id === postId
@@ -434,6 +498,19 @@ export class SocialService {
       )
     );
 
+    // Offline: encolar y dejar que el flush reconcilie cuando vuelva online.
+    if (!this.network.online()) {
+      // Posts pendientes (tempId) aún no existen en servidor: no encolar like.
+      if (postId.startsWith('pending-')) return;
+      await this.offlineQueue.enqueue({
+        id: `${postId}:${Date.now()}`,
+        type: 'toggle_like',
+        payload: { postId }
+      });
+      return;
+    }
+
+    const client = this.supabaseService.assertConfigured();
     const { data, error } = await client.rpc('toggle_post_like', { p_post: postId });
     if (error) {
       // Rollback
@@ -446,6 +523,22 @@ export class SocialService {
     }
 
     // Reconcilia con el valor autoritativo del servidor
+    const row = ((data as { liked: boolean; likes_count: number }[] | null) ?? [])[0];
+    if (row) {
+      this.posts.update((items) =>
+        items.map((p) =>
+          p.id === postId ? { ...p, liked: row.liked, likes: row.likes_count } : p
+        )
+      );
+    }
+  }
+
+  private async executeToggleLike(action: OutboxAction): Promise<void> {
+    const postId = action.payload['postId'] as string;
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client.rpc('toggle_post_like', { p_post: postId });
+    if (error) throw new Error(error.message);
+
     const row = ((data as { liked: boolean; likes_count: number }[] | null) ?? [])[0];
     if (row) {
       this.posts.update((items) =>

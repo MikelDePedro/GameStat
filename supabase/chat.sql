@@ -274,6 +274,40 @@ $$;
 
 grant execute on function public.remove_group_member(uuid, uuid) to authenticated;
 
+-- Promueve un miembro a admin. Solo admins pueden hacerlo. No degrada admins
+-- existentes (es idempotente: si ya es admin no falla).
+create or replace function public.promote_group_member(conv_id uuid, target_user uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  conv_type text;
+begin
+  if me is null then raise exception 'No autenticado'; end if;
+  select type into conv_type from public.conversations where id = conv_id;
+  if conv_type is null then raise exception 'Conversacion inexistente'; end if;
+  if conv_type <> 'group' then raise exception 'Solo grupos tienen administradores'; end if;
+
+  if not public.is_conversation_admin(conv_id, me) then
+    raise exception 'Solo administradores pueden promover miembros';
+  end if;
+
+  update public.conversation_participants
+     set role = 'admin'
+   where conversation_id = conv_id
+     and user_id = target_user;
+
+  if not found then
+    raise exception 'El usuario no es miembro de este grupo';
+  end if;
+end;
+$$;
+
+grant execute on function public.promote_group_member(uuid, uuid) to authenticated;
+
 -- =========================================================
 --  RPC: get_user_conversations
 --  Lista las conversaciones del usuario con metadata util
@@ -290,6 +324,7 @@ returns table (
   last_message_content text,
   last_message_sender uuid,
   unread_count int,
+  member_count int,
   other_user_id uuid,
   other_user_name text,
   other_user_avatar text
@@ -312,6 +347,8 @@ as $$
        where m.conversation_id = c.id
          and m.created_at > p.last_read_at
          and m.sender_id <> (select uid from me)) as unread_count,
+    (select count(*)::int from public.conversation_participants pp
+       where pp.conversation_id = c.id) as member_count,
     ou.id, ou.name, ou.avatar
   from public.conversations c
   join public.conversation_participants p

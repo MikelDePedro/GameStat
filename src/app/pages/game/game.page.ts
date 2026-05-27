@@ -17,12 +17,13 @@ import { addIcons } from 'ionicons';
 import { heart, heartOutline } from 'ionicons/icons';
 import { finalize } from 'rxjs';
 
-import { ReviewItem } from '../../models';
+import { ReviewItem, ReviewStats } from '../../models';
 import { RawgGameDetails } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
+import { ReviewStatsCardComponent } from '../../shared/components/review-stats-card/review-stats-card.component';
 
 @Component({
   standalone: true,
@@ -38,7 +39,8 @@ import { SocialService } from '../../core/services/social.service';
     IonRange,
     IonSpinner,
     IonText,
-    IonTextarea
+    IonTextarea,
+    ReviewStatsCardComponent
   ],
   styleUrls: ['./game.page.scss'],
   template: `
@@ -178,6 +180,12 @@ import { SocialService } from '../../core/services/social.service';
               <span>{{ review.createdAt }}</span>
             </article>
           </section>
+
+          <app-review-stats-card
+            *ngIf="reviewStats"
+            [stats]="reviewStats"
+            title="Distribución de puntuaciones">
+          </app-review-stats-card>
         </ng-container>
       </div>
     </ion-content>
@@ -193,6 +201,7 @@ export class GamePage implements OnInit {
   errorMessage = '';
   reviewError = '';
   reviewMessage = '';
+  reviewStats: ReviewStats | null = null;
 
   form = {
     comment: '',
@@ -257,11 +266,20 @@ export class GamePage implements OnInit {
       .subscribe({
         next: (game) => {
           this.game = game;
+          void this.loadStats(game.id);
         },
         error: (error: Error) => {
           this.errorMessage = error.message;
         }
       });
+  }
+
+  private async loadStats(rawgId: number): Promise<void> {
+    try {
+      this.reviewStats = await this.social.getReviewStats(rawgId);
+    } catch {
+      this.reviewStats = null;
+    }
   }
 
   async saveReview(): Promise<void> {

@@ -1,20 +1,31 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  QueryList,
+  ViewChildren,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
   AlertController,
-  IonAvatar,
+  AnimationController,
   IonButton,
   IonContent,
   IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
+  IonSkeletonText,
   IonSpinner,
   IonTextarea,
-  ToastController
+  ToastController,
+  InfiniteScrollCustomEvent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -22,29 +33,40 @@ import {
   heart,
   heartOutline,
   refreshOutline,
+  shareSocialOutline,
   trashOutline
 } from 'ionicons/icons';
 
 import { SocialComment, SocialPost } from '../../models';
 import { AuthService } from '../../core/services/auth.service';
 import { SocialService } from '../../core/services/social.service';
+import { PlatformService } from '../../core/services/platform.service';
+import {
+  EmptyStateComponent,
+  TimeAgoPipe,
+  UserAvatarComponent,
+  fadeInUp
+} from '../../shared';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
-    IonAvatar,
     IonButton,
     IonContent,
     IonIcon,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
+    IonSkeletonText,
     IonSpinner,
-    IonTextarea
+    IonTextarea,
+    UserAvatarComponent,
+    EmptyStateComponent,
+    TimeAgoPipe
   ],
   styleUrls: ['./feed.page.scss'],
   template: `
@@ -59,65 +81,111 @@ import { SocialService } from '../../core/services/social.service';
           <ion-item lines="none">
             <ion-textarea
               [(ngModel)]="postContent"
-              placeholder="Que estas jugando hoy?"
+              placeholder="¿Qué estás jugando hoy?"
               autoGrow="true"
-              maxlength="500">
+              maxlength="500"
+              aria-label="Contenido del nuevo post">
             </ion-textarea>
           </ion-item>
           <div class="actions">
-            <span class="char-count">{{ postContent.length }}/500</span>
-            <ion-button (click)="publishPost()" [disabled]="publishing()">
-              {{ publishing() ? 'Publicando...' : 'Publicar' }}
+            <span class="char-count" aria-live="polite">{{ postContent.length }}/500</span>
+            <ion-button
+              (click)="publishPost()"
+              [disabled]="publishing() || !postContent.trim()">
+              {{ publishing() ? 'Publicando…' : 'Publicar' }}
             </ion-button>
           </div>
         </section>
 
         <section class="surface-card feed-list-card">
           <header class="feed-header">
-            <h2>Ultimos posts</h2>
-            <ion-button fill="clear" (click)="refresh()">
+            <h2>Últimos posts</h2>
+            <ion-button fill="clear" (click)="refresh()" aria-label="Recargar feed">
               <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
             </ion-button>
           </header>
 
-          <div class="loading" *ngIf="social.loadingPosts()">
-            <ion-spinner name="crescent"></ion-spinner>
+          <!-- Skeletons mientras carga la primera vez -->
+          <div *ngIf="social.loadingPosts() && social.posts().length === 0" class="skeletons">
+            <article class="post-card skeleton" *ngFor="let s of [0,1,2]">
+              <header>
+                <ion-skeleton-text animated style="width:44px;height:44px;border-radius:50%"></ion-skeleton-text>
+                <div class="meta">
+                  <ion-skeleton-text animated style="width:40%"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width:25%"></ion-skeleton-text>
+                </div>
+              </header>
+              <ion-skeleton-text animated style="width:95%"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width:80%"></ion-skeleton-text>
+            </article>
           </div>
 
-          <p class="empty" *ngIf="!social.loadingPosts() && social.posts().length === 0">
-            Aun no hay posts. Se el primero!
-          </p>
+          <!-- Empty state -->
+          <app-empty-state
+            *ngIf="!social.loadingPosts() && social.posts().length === 0"
+            variant="empty"
+            title="Aún no hay posts"
+            message="Sé el primero en compartir algo con la comunidad."
+            actionLabel="Recargar"
+            (action)="refresh()">
+          </app-empty-state>
 
-          <ion-list lines="none" class="posts">
+          <ion-list lines="none" class="posts" *ngIf="social.posts().length > 0">
             <article
+              #postCard
               class="post-card"
-              *ngFor="let post of social.posts(); trackBy: trackById">
+              *ngFor="let post of social.posts(); trackBy: trackById"
+              [class.pending]="post.pending">
               <header>
-                <ion-avatar class="avatar-circle" [routerLink]="['/profile', post.userId]">
-                  <span>{{ post.authorAvatar }}</span>
-                </ion-avatar>
+                <app-user-avatar
+                  [name]="post.author"
+                  [avatar]="post.authorAvatar"
+                  [userId]="post.userId"
+                  size="md"
+                  [linkToProfile]="true">
+                </app-user-avatar>
                 <div class="meta">
-                  <strong [routerLink]="['/profile', post.userId]">{{ post.author }}</strong>
-                  <span>{{ post.createdAt }}</span>
+                  <strong>{{ post.author }}</strong>
+                  <span>{{ post.createdAtTimestamp | timeAgo }}</span>
                 </div>
                 <ion-button
                   fill="clear"
                   color="medium"
                   *ngIf="post.userId === currentUserId()"
-                  (click)="deletePost(post)">
+                  (click)="deletePost(post)"
+                  aria-label="Borrar post">
                   <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
                 </ion-button>
               </header>
               <p class="content">{{ post.content }}</p>
               <footer>
-                <ion-button fill="clear" size="small" (click)="toggleLike(post)">
-                  <ion-icon slot="start" [name]="post.liked ? 'heart' : 'heart-outline'"
-                            [color]="post.liked ? 'danger' : 'medium'"></ion-icon>
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  (click)="toggleLike(post)"
+                  [attr.aria-pressed]="post.liked"
+                  [attr.aria-label]="post.liked ? 'Quitar like' : 'Dar like'">
+                  <ion-icon
+                    slot="start"
+                    [name]="post.liked ? 'heart' : 'heart-outline'"
+                    [color]="post.liked ? 'danger' : 'medium'">
+                  </ion-icon>
                   {{ post.likes }}
                 </ion-button>
-                <ion-button fill="clear" size="small" (click)="toggleComments(post)">
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  (click)="toggleComments(post)"
+                  aria-label="Comentarios">
                   <ion-icon slot="start" name="chatbubble-outline"></ion-icon>
                   {{ post.comments }}
+                </ion-button>
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  (click)="sharePost(post)"
+                  aria-label="Compartir post">
+                  <ion-icon slot="icon-only" name="share-social-outline"></ion-icon>
                 </ion-button>
               </footer>
 
@@ -126,7 +194,11 @@ import { SocialService } from '../../core/services/social.service';
                   <ion-spinner name="crescent"></ion-spinner>
                 </div>
                 <article class="comment" *ngFor="let c of commentsList()">
-                  <ion-avatar class="avatar-circle small"><span>{{ c.authorAvatar }}</span></ion-avatar>
+                  <app-user-avatar
+                    [name]="c.author"
+                    [avatar]="c.authorAvatar"
+                    size="sm">
+                  </app-user-avatar>
                   <div>
                     <strong>{{ c.author }}</strong>
                     <small>{{ c.createdAt }}</small>
@@ -136,7 +208,8 @@ import { SocialService } from '../../core/services/social.service';
                 <ion-item lines="none" class="comment-composer">
                   <ion-input
                     [(ngModel)]="commentDraft"
-                    placeholder="Escribe un comentario..."
+                    placeholder="Escribe un comentario…"
+                    aria-label="Nuevo comentario"
                     (keydown.enter)="submitComment(post)">
                   </ion-input>
                   <ion-button slot="end" (click)="submitComment(post)" [disabled]="sendingComment()">
@@ -146,12 +219,24 @@ import { SocialService } from '../../core/services/social.service';
               </div>
             </article>
           </ion-list>
+
+          <ion-infinite-scroll
+            *ngIf="social.posts().length > 0"
+            threshold="200px"
+            [disabled]="!social.hasMore() || social.loadingMore()"
+            (ionInfinite)="onInfinite($event)">
+            <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Cargando más posts…">
+            </ion-infinite-scroll-content>
+          </ion-infinite-scroll>
         </section>
       </div>
     </ion-content>
   `
 })
-export class FeedPage {
+export class FeedPage implements AfterViewInit {
+  @ViewChildren('postCard', { read: ElementRef })
+  private postCards?: QueryList<ElementRef<HTMLElement>>;
+
   postContent = '';
   commentDraft = '';
   readonly publishing = signal(false);
@@ -162,13 +247,41 @@ export class FeedPage {
 
   readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? '');
 
+  private readonly platform = inject(PlatformService);
+  private readonly animCtrl = inject(AnimationController);
+  private animatedIds = new Set<string>();
+
   constructor(
     public readonly social: SocialService,
     private readonly auth: AuthService,
     private readonly toastCtrl: ToastController,
     private readonly alertCtrl: AlertController
   ) {
-    addIcons({ heart, heartOutline, chatbubbleOutline, trashOutline, refreshOutline });
+    addIcons({
+      heart,
+      heartOutline,
+      chatbubbleOutline,
+      trashOutline,
+      refreshOutline,
+      shareSocialOutline
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Animar cards nuevas cuando entren al DOM.
+    this.postCards?.changes.subscribe(() => this.animateNewCards());
+    queueMicrotask(() => this.animateNewCards());
+  }
+
+  private animateNewCards(): void {
+    const cards = this.postCards?.toArray() ?? [];
+    const posts = this.social.posts();
+    cards.forEach((ref, i) => {
+      const post = posts[i];
+      if (!post || this.animatedIds.has(post.id)) return;
+      this.animatedIds.add(post.id);
+      void fadeInUp(this.animCtrl, ref.nativeElement, i * 30).play();
+    });
   }
 
   trackById(_: number, p: SocialPost): string {
@@ -176,7 +289,8 @@ export class FeedPage {
   }
 
   refresh(): void {
-    void this.social.loadPosts();
+    this.animatedIds.clear();
+    void this.social.refreshFeed();
   }
 
   async publishPost(): Promise<void> {
@@ -185,7 +299,9 @@ export class FeedPage {
     try {
       await this.social.createPost(this.postContent);
       this.postContent = '';
+      void this.platform.send();
     } catch (e) {
+      void this.platform.error();
       void this.toast(e instanceof Error ? e.message : 'No se pudo publicar.', 'danger');
     } finally {
       this.publishing.set(false);
@@ -193,11 +309,21 @@ export class FeedPage {
   }
 
   async toggleLike(post: SocialPost): Promise<void> {
+    void this.platform.tap();
     try {
       await this.social.toggleLike(post.id);
     } catch (e) {
       void this.toast(e instanceof Error ? e.message : 'No se pudo dar like.', 'danger');
     }
+  }
+
+  async sharePost(post: SocialPost): Promise<void> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    await this.platform.share({
+      title: `Post de ${post.author} en GameStat`,
+      text: post.content,
+      url: origin ? `${origin}/tabs/feed?post=${post.id}` : undefined
+    });
   }
 
   async deletePost(post: SocialPost): Promise<void> {
@@ -212,6 +338,7 @@ export class FeedPage {
           handler: async () => {
             try {
               await this.social.deletePost(post.id);
+              void this.platform.success();
             } catch (e) {
               void this.toast(e instanceof Error ? e.message : 'Error', 'danger');
             }
@@ -246,10 +373,19 @@ export class FeedPage {
       const c = await this.social.addComment(post.id, this.commentDraft);
       this.commentsList.update((items) => [...items, c]);
       this.commentDraft = '';
+      void this.platform.tap();
     } catch (e) {
       void this.toast(e instanceof Error ? e.message : 'Error', 'danger');
     } finally {
       this.sendingComment.set(false);
+    }
+  }
+
+  async onInfinite(ev: InfiniteScrollCustomEvent): Promise<void> {
+    try {
+      await this.social.loadMoreFeed();
+    } finally {
+      await ev.target.complete();
     }
   }
 

@@ -8,12 +8,13 @@ import {
   IonText
 } from '@ionic/angular/standalone';
 
-import { ReviewItem } from '../../models';
+import { ReviewItem, ReviewStats } from '../../models';
 import { SocialService } from '../../core/services/social.service';
+import { ReviewStatsCardComponent } from '../../shared/components/review-stats-card/review-stats-card.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, IonButton, IonContent, IonSpinner, IonText],
+  imports: [CommonModule, RouterLink, IonButton, IonContent, IonSpinner, IonText, ReviewStatsCardComponent],
   styleUrls: ['./review-detail.page.scss'],
   template: `
     <ion-content>
@@ -38,6 +39,12 @@ import { SocialService } from '../../core/services/social.service';
           <p class="comment">{{ r.comment }}</p>
         </section>
 
+        <app-review-stats-card
+          *ngIf="stats() as s"
+          [stats]="s"
+          title="Distribución del juego">
+        </app-review-stats-card>
+
         <div class="loading" *ngIf="loading()">
           <ion-spinner name="crescent"></ion-spinner>
         </div>
@@ -53,6 +60,7 @@ export class ReviewDetailPage implements OnInit {
   readonly review = signal<ReviewItem | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly stats = signal<ReviewStats | null>(null);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -69,7 +77,15 @@ export class ReviewDetailPage implements OnInit {
     this.loading.set(true);
     this.error.set('');
     try {
-      this.review.set(await this.social.getReviewById(reviewId));
+      const review = await this.social.getReviewById(reviewId);
+      this.review.set(review);
+      if (review?.gameId) {
+        try {
+          this.stats.set(await this.social.getReviewStats(review.gameId));
+        } catch {
+          this.stats.set(null);
+        }
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No se pudo cargar la review.');
     } finally {

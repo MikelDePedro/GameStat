@@ -38,6 +38,8 @@ export interface SocialPost {
   liked: boolean;
   createdAt: string;
   createdAtTimestamp: number;
+  /** true mientras el post está encolado en el outbox offline. */
+  pending?: boolean;
 }
 
 export interface SocialComment {
@@ -69,6 +71,11 @@ export interface Conversation {
   createdAt: string;
   lastMessageAt: string;
   lastMessageAtTimestamp: number;
+  lastMessageContent: string | null;
+  lastMessageSender: string | null;
+  unreadCount: number;
+  memberCount: number;
+  otherUserId: string | null;
   participants: ConversationParticipant[];
 }
 
@@ -81,6 +88,10 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   createdAtTimestamp: number;
+  editedAt: string | null;
+  editedAtTimestamp: number | null;
+  /** true mientras el mensaje está encolado en el outbox offline. */
+  pending?: boolean;
 }
 
 // ---------- FOLLOWS ----------

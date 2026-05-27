@@ -116,6 +116,26 @@
   min-width: 0;
 }
 
+.composer ion-textarea {
+  --background: rgba(27, 24, 46, 0.72);
+  --color: var(--app-text);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  border-radius: 18px;
+  flex: 1;
+  min-width: 0;
+  max-height: 140px;
+}
+
+.typing {
+  font-size: 12px;
+  color: var(--app-text-soft);
+  font-style: italic;
+  margin: 4px 0 0;
+  padding-left: 4px;
+  min-height: 16px;
+}
+
 /* Offsets para compensar la sidebar fija en desktop/tablet.
    En mobile la navegacion es una bottom-bar, no se aplica margin-left. */
 @media (min-width: 768px) {
@@ -173,4 +193,131 @@
 .error {
   text-align: center;
   margin: 0;
+}
+
+.bubble {
+  position: relative;
+}
+
+.bubble .edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--app-text-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 2px;
+  font-size: 14px;
+}
+
+.bubble:hover .edit-btn,
+.bubble:focus-within .edit-btn {
+  opacity: 0.85;
+}
+
+.bubble .edited {
+  font-style: italic;
+  margin-left: 4px;
+  opacity: 0.75;
+}
+
+.loading.older {
+  padding: 6px;
+}
+
+/* ---------- Modal de gestión de grupo ---------- */
+.group-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0;
+}
+
+.group-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 18px 18px 0 0;
+  padding: 18px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 720px) {
+  .group-modal-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+  .group-modal {
+    border-radius: 18px;
+  }
+}
+
+.group-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.group-modal-header .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-text-soft);
+  margin: 0 0 2px;
+}
+
+.members-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-text-soft);
+  margin: 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.members-list,
+.search-results {
+  background: transparent;
+}
+
+.role-chip {
+  margin: 4px 0 0;
+  font-size: 11px;
+  height: 22px;
+}
+
+.me-tag {
+  font-size: 12px;
+  color: var(--app-text-soft);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.add-member-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.group-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
