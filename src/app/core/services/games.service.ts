@@ -53,8 +53,14 @@ export class GamesService {
     private readonly supabaseService: SupabaseService
   ) {}
 
+  /** Catalogo publico (tabla rawg_games). Requiere flag de entorno. */
   supportsSupabaseSync(): boolean {
     return this.supabaseSyncEnabledByConfig && this.supabaseService.isConfigured;
+  }
+
+  /** Favoritos por usuario. Solo requiere Supabase configurado. */
+  favoritesEnabled(): boolean {
+    return this.supabaseService.isConfigured;
   }
 
   getPopularGames(page = 1, pageSize = this.defaultPageSize): Observable<RawgGamesPage> {
@@ -89,7 +95,7 @@ export class GamesService {
   }
 
   getFavoriteGames(userId: string): Observable<number[]> {
-    if (!this.supportsSupabaseSync()) {
+    if (!this.favoritesEnabled()) {
       return of([]);
     }
 
@@ -118,7 +124,7 @@ export class GamesService {
   }
 
   getFavoriteGamesWithDetails(userId: string): Observable<RawgGame[]> {
-    if (!this.supportsSupabaseSync()) {
+    if (!this.favoritesEnabled()) {
       return of([]);
     }
 
@@ -158,7 +164,7 @@ export class GamesService {
   }
 
   saveFavoriteGame(userId: string, game: RawgGame): Observable<void> {
-    if (!this.supportsSupabaseSync()) {
+    if (!this.favoritesEnabled()) {
       return of(void 0);
     }
 
@@ -194,7 +200,7 @@ export class GamesService {
   }
 
   removeFavoriteGame(userId: string, rawgId: number): Observable<void> {
-    if (!this.supportsSupabaseSync()) {
+    if (!this.favoritesEnabled()) {
       return of(void 0);
     }
 

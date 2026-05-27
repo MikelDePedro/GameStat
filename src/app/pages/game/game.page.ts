@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
+  IonIcon,
   IonItem,
   IonLabel,
   IonRange,
@@ -12,11 +13,14 @@ import {
   IonText,
   IonTextarea
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { heart, heartOutline } from 'ionicons/icons';
 import { finalize } from 'rxjs';
 
 import { ReviewItem } from '../../models';
 import { RawgGameDetails } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
+import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
 
@@ -28,6 +32,7 @@ import { SocialService } from '../../core/services/social.service';
     RouterLink,
     IonButton,
     IonContent,
+    IonIcon,
     IonItem,
     IonLabel,
     IonRange,
@@ -61,6 +66,23 @@ import { SocialService } from '../../core/services/social.service';
               <p class="eyebrow">Ficha del juego</p>
               <h1>{{ game.name }}</h1>
               <p class="description">{{ game.description_raw || 'Sin descripcion disponible.' }}</p>
+
+              <ion-button
+                *ngIf="favorites.enabled()"
+                fill="outline"
+                size="small"
+                [disabled]="favorites.isLoading(game.id)"
+                [color]="favorites.isFavorite(game.id) ? 'danger' : 'medium'"
+                (click)="toggleFavorite()">
+                <ion-icon
+                  slot="start"
+                  [name]="favorites.isFavorite(game.id) ? 'heart' : 'heart-outline'">
+                </ion-icon>
+                {{ favorites.isFavorite(game.id) ? 'En favoritos' : 'Anadir a favoritos' }}
+              </ion-button>
+              <ion-text color="warning" *ngIf="favorites.error() as favError">
+                <p class="feedback">{{ favError }}</p>
+              </ion-text>
 
               <div class="meta-grid">
                 <article class="meta-card">
@@ -163,6 +185,7 @@ import { SocialService } from '../../core/services/social.service';
 })
 export class GamePage implements OnInit {
   readonly fallbackCover = 'https://via.placeholder.com/960x540?text=Juego';
+  readonly favorites = inject(FavoritesService);
 
   game: RawgGameDetails | null = null;
   loading = true;
@@ -181,7 +204,15 @@ export class GamePage implements OnInit {
     private readonly gamesService: GamesService,
     private readonly auth: AuthService,
     private readonly social: SocialService
-  ) {}
+  ) {
+    addIcons({ heart, heartOutline });
+  }
+
+  toggleFavorite(): void {
+    if (this.game) {
+      void this.favorites.toggle(this.game);
+    }
+  }
 
   get developersText(): string {
     return this.game?.developers?.map((item) => item.name).join(', ') ?? '';

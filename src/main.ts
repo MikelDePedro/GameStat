@@ -6,13 +6,17 @@ import { provideIonicAngular } from '@ionic/angular/standalone';
 
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/app.routes';
+import { pageTransitionAnimation } from './app/shared/animations/page-transition';
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(),
     provideAnimations(),
     provideRouter(appRoutes, withComponentInputBinding()),
-    // Ionic 8 standalone: provider ligero, sin importar el NgModule entero.
-    provideIonicAngular({ mode: 'md' })
+    // Ionic 8 standalone con animacion nativa personalizada.
+    provideIonicAngular({
+      mode: 'md',
+      navAnimation: pageTransitionAnimation
+    })
   ]
 }).catch((error) => console.error(error));

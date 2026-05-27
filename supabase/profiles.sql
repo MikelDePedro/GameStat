@@ -4,8 +4,44 @@ create table if not exists public.profiles (
   name text not null,
   favorite_game text not null default '',
   bio text not null default '',
-  avatar text not null default ''
+  avatar text not null default '',
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
 );
+
+-- Columnas que pueden faltar si la tabla ya existia (idempotente).
+alter table public.profiles
+  add column if not exists created_at timestamp with time zone not null default now(),
+  add column if not exists updated_at timestamp with time zone not null default now();
+
+-- Integridad: longitudes razonables, no permitir name vacio.
+alter table public.profiles
+  drop constraint if exists profiles_name_len_chk;
+alter table public.profiles
+  add  constraint profiles_name_len_chk
+  check (char_length(trim(name)) between 1 and 60);
+
+alter table public.profiles
+  drop constraint if exists profiles_bio_len_chk;
+alter table public.profiles
+  add  constraint profiles_bio_len_chk
+  check (char_length(bio) <= 500);
+
+alter table public.profiles
+  drop constraint if exists profiles_favgame_len_chk;
+alter table public.profiles
+  add  constraint profiles_favgame_len_chk
+  check (char_length(favorite_game) <= 120);
+
+-- Indice trigram para busqueda fuzzy por nombre (RPC search_profiles).
+create index if not exists profiles_name_trgm_idx
+  on public.profiles using gin (name gin_trgm_ops);
+
+-- Trigger updated_at.
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.tg_set_updated_at();
 
 alter table public.profiles enable row level security;
 
@@ -66,3 +102,35 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
+
+-- =========================================================
+--  RPC: search_profiles
+--  Busqueda fuzzy de usuarios para autocompletar (follows,
+--  crear grupos, etc). Excluye al propio usuario.
+-- =========================================================
+create or replace function public.search_profiles(q text, max_results int default 10)
+returns table (
+  id uuid,
+  name text,
+  avatar text,
+  bio text
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select p.id, p.name, p.avatar, p.bio
+    from public.profiles p
+   where p.id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
+     and (
+       q is null
+       or length(trim(q)) = 0
+       or p.name ilike '%' || q || '%'
+       or p.name % q
+     )
+   order by similarity(p.name, coalesce(q, '')) desc, p.name asc
+   limit greatest(1, least(coalesce(max_results, 10), 50));
+$$;
+
+grant execute on function public.search_profiles(text, int) to authenticated;
