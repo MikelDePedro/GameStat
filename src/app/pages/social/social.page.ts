@@ -32,6 +32,7 @@ import { Conversation, UserProfile } from '../../models';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { EmptyStateComponent } from '../../shared';
 
 type Tab = 'private' | 'group';
 
@@ -41,6 +42,7 @@ type Tab = 'private' | 'group';
     CommonModule,
     FormsModule,
     RouterLink,
+    EmptyStateComponent,
     IonAvatar,
     IonBadge,
     IonButton,
@@ -88,9 +90,11 @@ type Tab = 'private' | 'group';
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
-          <ion-text color="medium" *ngIf="!chat.loadingConversations() && filteredConversations().length === 0">
-            <p class="empty">No tienes {{ activeTab() === 'private' ? 'chats privados' : 'grupos' }} todavia.</p>
-          </ion-text>
+          <app-empty-state
+            *ngIf="!chat.loadingConversations() && filteredConversations().length === 0"
+            [title]="activeTab() === 'private' ? 'No tienes chats privados' : 'No tienes grupos'"
+            [message]="activeTab() === 'private' ? 'Empieza una conversación desde la comunidad.' : 'Crea o acepta invitaciones para ver grupos aquí.'">
+          </app-empty-state>
 
           <ion-list class="conversation-list" lines="none">
             <ion-item
@@ -175,9 +179,11 @@ type Tab = 'private' | 'group';
             </label>
           </div>
 
-          <ion-text color="medium" *ngIf="!groupCandidates().length">
-            <p class="empty">No hay usuarios disponibles para anadir.</p>
-          </ion-text>
+          <app-empty-state
+            *ngIf="!groupCandidates().length"
+            title="No hay usuarios disponibles"
+            message="Prueba a buscar más tarde o ajusta el filtro.">
+          </app-empty-state>
 
           <div class="group-modal-actions">
             <ion-button fill="outline" color="medium" (click)="closeGroupModal()">Cancelar</ion-button>

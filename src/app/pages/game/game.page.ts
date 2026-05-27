@@ -8,7 +8,6 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
-  IonRange,
   IonSpinner,
   IonText,
   IonTextarea
@@ -23,6 +22,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
+import { ReviewStatsCardComponent } from '../../shared';
+import { RatingStarsComponent } from '../../shared';
+import { ReviewStats } from '../../models';
 
 @Component({
   standalone: true,
@@ -30,12 +32,13 @@ import { SocialService } from '../../core/services/social.service';
     CommonModule,
     FormsModule,
     RouterLink,
+    ReviewStatsCardComponent,
+    RatingStarsComponent,
     IonButton,
     IonContent,
     IonIcon,
     IonItem,
     IonLabel,
-    IonRange,
     IonSpinner,
     IonText,
     IonTextarea
@@ -112,6 +115,14 @@ import { SocialService } from '../../core/services/social.service';
             </div>
           </section>
 
+          <section class="surface-card" *ngIf="reviewStatsLoading || reviewStats">
+            <app-review-stats-card
+              [stats]="reviewStats"
+              [title]="'Estadisticas de reviews del juego'"
+              [emptyText]="reviewStatsError || 'Aun no hay reviews de este juego.'">
+            </app-review-stats-card>
+          </section>
+
           <section class="surface-card review-card">
             <div class="review-header">
               <p class="eyebrow">Review del videojuego</p>
@@ -148,7 +159,13 @@ import { SocialService } from '../../core/services/social.service';
                   </ion-button>
                 </div>
               </div>
-              <ion-range min="1" max="10" step="1" snaps="true" [(ngModel)]="form.rating"></ion-range>
+              <app-rating-stars
+                [value]="form.rating"
+                [readonly]="false"
+                [showValue]="true"
+                [max]="10"
+                (valueChange)="form.rating = $event">
+              </app-rating-stars>
             </div>
 
             <ion-button expand="block" [disabled]="saving" (click)="saveReview()">
@@ -172,7 +189,7 @@ import { SocialService } from '../../core/services/social.service';
             <article class="stored-review" *ngFor="let review of gameReviews">
               <div class="stored-top">
                 <h3>{{ review.author }}</h3>
-                <strong>{{ review.rating }}/10</strong>
+                <app-rating-stars [value]="review.rating" [readonly]="true" [showValue]="true"></app-rating-stars>
               </div>
               <p>{{ review.comment }}</p>
               <span>{{ review.createdAt }}</span>
@@ -193,6 +210,9 @@ export class GamePage implements OnInit {
   errorMessage = '';
   reviewError = '';
   reviewMessage = '';
+  reviewStats: ReviewStats | null = null;
+  reviewStatsLoading = false;
+  reviewStatsError = '';
 
   form = {
     comment: '',
@@ -257,6 +277,7 @@ export class GamePage implements OnInit {
       .subscribe({
         next: (game) => {
           this.game = game;
+          void this.loadReviewStats(game.id);
         },
         error: (error: Error) => {
           this.errorMessage = error.message;
@@ -308,5 +329,18 @@ export class GamePage implements OnInit {
 
   updateRating(delta: number): void {
     this.form.rating = Math.max(1, Math.min(10, this.form.rating + delta));
+  }
+
+  private async loadReviewStats(gameId: number): Promise<void> {
+    this.reviewStatsLoading = true;
+    this.reviewStatsError = '';
+    try {
+      this.reviewStats = await this.social.getReviewStats(gameId);
+    } catch (error) {
+      this.reviewStats = null;
+      this.reviewStatsError = error instanceof Error ? error.message : 'No se pudieron cargar las estadisticas.';
+    } finally {
+      this.reviewStatsLoading = false;
+    }
   }
 }

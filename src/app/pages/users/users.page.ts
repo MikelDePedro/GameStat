@@ -23,12 +23,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
 import { FollowService } from '../../core/services/follow.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { EmptyStateComponent } from '../../shared';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
+    EmptyStateComponent,
     IonAvatar,
     IonButton,
     IonContent,
@@ -65,6 +67,12 @@ import { ProfileService } from '../../core/services/profile.service';
           <ion-text color="danger" *ngIf="error()">
             <p>{{ error() }}</p>
           </ion-text>
+
+          <app-empty-state
+            *ngIf="!loading() && !error() && users().length === 0"
+            title="No hay usuarios"
+            message="Prueba con otro término de búsqueda.">
+          </app-empty-state>
 
           <ion-list lines="none">
             <ion-item

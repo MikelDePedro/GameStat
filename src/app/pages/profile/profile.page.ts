@@ -12,6 +12,7 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonSpinner,
   IonSegment,
   IonSegmentButton,
@@ -40,13 +41,14 @@ import {
 } from 'rxjs';
 
 import { RawgGame } from '../../core/models/rawg.models';
-import { FollowStats, ReviewItem, SocialPost, UserProfile } from '../../models';
+import { FollowStats, ProfileSummary, ReviewItem, SocialPost, UserProfile } from '../../models';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
 import { FollowService } from '../../core/services/follow.service';
 import { GamesService } from '../../core/services/games.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { SocialService } from '../../core/services/social.service';
+import { UserAvatarComponent } from '../../shared';
 
 type ActivityEntry =
   | (SocialPost & { kind: 'post' })
@@ -58,6 +60,7 @@ type ActivityEntry =
     CommonModule,
     FormsModule,
     RouterLink,
+    UserAvatarComponent,
     IonAvatar,
     IonButton,
     IonBadge,
@@ -66,6 +69,7 @@ type ActivityEntry =
     IonInput,
     IonItem,
     IonLabel,
+    IonList,
     IonSpinner,
     IonSegment,
     IonSegmentButton,
@@ -79,9 +83,7 @@ type ActivityEntry =
       <div class="page-shell page">
 
         <section class="surface-card profile-card" *ngIf="profile() as p">
-          <ion-avatar class="avatar-circle big">
-            <span>{{ p.avatar }}</span>
-          </ion-avatar>
+          <app-user-avatar [name]="p.name" [avatar]="p.avatar" size="xl"></app-user-avatar>
           <h1>{{ p.name }}</h1>
           <p class="muted" *ngIf="isMine()">{{ p.email }}</p>
           <ion-text color="medium">Juego favorito: {{ p.favoriteGame || '—' }}</ion-text>
@@ -110,6 +112,58 @@ type ActivityEntry =
               Mensaje
             </ion-button>
           </div>
+        </section>
+
+        <section class="surface-card follow-card" *ngIf="profile() as p">
+          <div class="follow-card-header">
+            <div>
+              <h2>Seguidores / Siguiendo</h2>
+              <p class="activity-subtitle">Consulta los perfiles relacionados con este usuario.</p>
+            </div>
+            <ion-segment [value]="followListMode()" (ionChange)="setFollowListMode($event)">
+              <ion-segment-button value="followers">Seguidores</ion-segment-button>
+              <ion-segment-button value="following">Siguiendo</ion-segment-button>
+            </ion-segment>
+          </div>
+
+          <div class="loading" *ngIf="followListLoading()">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+
+          <ion-text color="danger" *ngIf="followListError()">
+            <p>{{ followListError() }}</p>
+          </ion-text>
+
+          <ion-list lines="none" class="follow-list" *ngIf="followList().length">
+            <ion-item *ngFor="let entry of followList(); trackBy: trackByProfileId" button [routerLink]="['/profile', entry.id]">
+              <app-user-avatar
+                slot="start"
+                [name]="entry.name"
+                [avatar]="entry.avatar"
+                [userId]="entry.id"
+                [linkToProfile]="true"
+                size="sm">
+              </app-user-avatar>
+              <ion-label>
+                <h2>{{ entry.name }}</h2>
+                <p>{{ entry.bio || 'Sin biografia.' }}</p>
+                <span *ngIf="entry.followedAt">Desde {{ entry.followedAt }}</span>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+
+          <div class="empty-favorites" *ngIf="!followListLoading() && followList().length === 0 && !followListError()">
+            <p>No hay elementos para mostrar en esta pestaña.</p>
+          </div>
+
+          <ion-button
+            expand="block"
+            fill="outline"
+            *ngIf="followListHasMore()"
+            [disabled]="followListLoading()"
+            (click)="loadMoreFollowList()">
+            {{ followListLoading() ? 'Cargando...' : 'Cargar mas' }}
+          </ion-button>
         </section>
 
         <section class="surface-card edit-card" *ngIf="isMine() && profile() as p">
@@ -276,6 +330,12 @@ export class ProfilePage implements OnInit {
   });
   readonly hasFavoriteGames = computed(() => this.favoriteGames().length > 0);
   readonly stats = signal<FollowStats>({ followers: 0, following: 0, isFollowing: false });
+  readonly followListMode = signal<'followers' | 'following'>('followers');
+  readonly followList = signal<ProfileSummary[]>([]);
+  readonly followListLoading = signal(false);
+  readonly followListError = signal('');
+  readonly followListOffset = signal(0);
+  readonly followListHasMore = signal(true);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly isMine = computed(() => {
@@ -406,11 +466,28 @@ export class ProfilePage implements OnInit {
         ...reviews.map((review) => ({ ...review, kind: 'review' as const }))
       ].sort((a, b) => (b.createdAtTimestamp ?? Date.now()) - (a.createdAtTimestamp ?? Date.now())));
       this.stats.set(stats);
+      await this.loadFollowList(true);
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'No se pudo cargar el perfil.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  trackByProfileId(_: number, entry: ProfileSummary): string {
+    return entry.id;
+  }
+
+  async setFollowListMode(event: CustomEvent): Promise<void> {
+    const value = event.detail?.value;
+    if (value === 'followers' || value === 'following') {
+      this.followListMode.set(value);
+      await this.loadFollowList(true);
+    }
+  }
+
+  async loadMoreFollowList(): Promise<void> {
+    await this.loadFollowList(false);
   }
 
   async toggleFollow(): Promise<void> {
@@ -482,6 +559,42 @@ export class ProfilePage implements OnInit {
   private async toast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, duration: 2200, color, position: 'top' });
     await t.present();
+  }
+
+  private async loadFollowList(reset: boolean): Promise<void> {
+    const profile = this.profile();
+    if (!profile) return;
+
+    const pageSize = 12;
+    const offset = reset ? 0 : this.followListOffset();
+
+    if (reset) {
+      this.followList.set([]);
+      this.followListOffset.set(0);
+      this.followListHasMore.set(true);
+    }
+
+    if (!reset && !this.followListHasMore()) {
+      return;
+    }
+
+    this.followListLoading.set(true);
+    this.followListError.set('');
+    try {
+      const rows =
+        this.followListMode() === 'followers'
+          ? await this.follows.listFollowers(profile.id, pageSize, offset)
+          : await this.follows.listFollowing(profile.id, pageSize, offset);
+
+      this.followList.update((items) => (reset ? rows : [...items, ...rows]));
+      this.followListOffset.set(offset + rows.length);
+      this.followListHasMore.set(rows.length === pageSize);
+    } catch (e) {
+      this.followListError.set(e instanceof Error ? e.message : 'No se pudo cargar la lista.');
+      this.followListHasMore.set(false);
+    } finally {
+      this.followListLoading.set(false);
+    }
   }
 
   private setupFavoriteGameSearch(): void {

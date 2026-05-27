@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   AlertController,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonAvatar,
   IonButton,
   IonContent,
@@ -28,6 +30,7 @@ import {
 import { SocialComment, SocialPost } from '../../models';
 import { AuthService } from '../../core/services/auth.service';
 import { SocialService } from '../../core/services/social.service';
+import { EmptyStateComponent } from '../../shared';
 
 @Component({
   standalone: true,
@@ -35,6 +38,9 @@ import { SocialService } from '../../core/services/social.service';
     CommonModule,
     FormsModule,
     RouterLink,
+    EmptyStateComponent,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
     IonAvatar,
     IonButton,
     IonContent,
@@ -84,9 +90,11 @@ import { SocialService } from '../../core/services/social.service';
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
-          <p class="empty" *ngIf="!social.loadingPosts() && social.posts().length === 0">
-            Aun no hay posts. Se el primero!
-          </p>
+          <app-empty-state
+            *ngIf="!social.loadingPosts() && social.posts().length === 0"
+            title="Aun no hay posts"
+            message="Se el primero en compartir algo con la comunidad.">
+          </app-empty-state>
 
           <ion-list lines="none" class="posts">
             <article
@@ -146,6 +154,13 @@ import { SocialService } from '../../core/services/social.service';
               </div>
             </article>
           </ion-list>
+
+          <ion-infinite-scroll
+            threshold="120px"
+            [disabled]="!social.hasMore() || social.loadingMore()"
+            (ionInfinite)="loadMore($event)">
+            <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Cargando mas posts..."></ion-infinite-scroll-content>
+          </ion-infinite-scroll>
         </section>
       </div>
     </ion-content>
@@ -177,6 +192,14 @@ export class FeedPage {
 
   refresh(): void {
     void this.social.loadPosts();
+  }
+
+  async loadMore(event: CustomEvent): Promise<void> {
+    try {
+      await this.social.loadMoreFeed();
+    } finally {
+      (event.target as HTMLIonInfiniteScrollElement | null)?.complete();
+    }
   }
 
   async publishPost(): Promise<void> {
