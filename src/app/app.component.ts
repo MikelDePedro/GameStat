@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
     }
 
     // Hardware back button → cerrar modales / volver.
-    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    CapacitorApp.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
       this.zone.run(() => {
         // Cerrar overlay abierto (modal/alert/action-sheet) si existe.
         const overlay = document.querySelector(

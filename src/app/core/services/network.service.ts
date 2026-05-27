@@ -1,5 +1,6 @@
 import { Injectable, NgZone, signal } from '@angular/core';
 import { Network } from '@capacitor/network';
+import type { NetworkStatus } from '@capacitor/network';
 
 /**
  * Estado de conectividad reactivo basado en `@capacitor/network`.
@@ -25,7 +26,7 @@ export class NetworkService {
     }
 
     try {
-      await Network.addListener('networkStatusChange', (status) => {
+      await Network.addListener('networkStatusChange', (status: NetworkStatus) => {
         this.zone.run(() => this.setOnline(status.connected));
       });
     } catch {
