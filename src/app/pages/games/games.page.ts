@@ -31,6 +31,7 @@ import { RawgGame, RawgGamesPage } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
+import { EmptyStateComponent } from '../../shared';
 
 @Component({
   standalone: true,
@@ -43,7 +44,8 @@ import { GamesService } from '../../core/services/games.service';
     IonInfiniteScrollContent,
     IonSearchbar,
     IonSpinner,
-    IonText
+    IonText,
+    EmptyStateComponent
   ],
   styleUrls: ['./games.page.scss'],
   templateUrl: './games.page.html'

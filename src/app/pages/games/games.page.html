@@ -74,8 +74,11 @@
         </article>
       </section>
 
-      <section class="surface-card empty-state" *ngIf="!isLoading && !errorMessage && !games.length">
-        <p>No hay resultados para la busqueda actual.</p>
+      <section class="surface-card" *ngIf="!isLoading && !errorMessage && !games.length">
+        <app-empty-state
+          title="No hay resultados"
+          message="No encontramos juegos para la búsqueda actual.">
+        </app-empty-state>
       </section>
 
     </div>

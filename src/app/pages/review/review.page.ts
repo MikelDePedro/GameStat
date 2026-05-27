@@ -10,7 +10,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonRange,
   IonSpinner,
   IonText,
   IonTextarea
@@ -31,6 +30,7 @@ import { RawgGame } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
 import { GamesService } from '../../core/services/games.service';
 import { SocialService } from '../../core/services/social.service';
+import { RatingStarsComponent } from '../../shared';
 
 @Component({
   standalone: true,
@@ -38,13 +38,13 @@ import { SocialService } from '../../core/services/social.service';
     CommonModule,
     FormsModule,
     RouterLink,
+    RatingStarsComponent,
     IonButton,
     IonContent,
     IonInput,
     IonItem,
     IonLabel,
     IonList,
-    IonRange,
     IonSpinner,
     IonText,
     IonTextarea
@@ -107,7 +107,13 @@ import { SocialService } from '../../core/services/social.service';
 
             <div class="range-wrap">
               <ion-text>Valoracion: {{ form.rating }}/10</ion-text>
-              <ion-range min="1" max="10" step="1" snaps="true" [(ngModel)]="form.rating"></ion-range>
+              <app-rating-stars
+                [value]="form.rating"
+                [readonly]="false"
+                [showValue]="true"
+                [max]="10"
+                (valueChange)="form.rating = $event">
+              </app-rating-stars>
             </div>
 
             <ion-button [disabled]="saving" (click)="addReview()">
