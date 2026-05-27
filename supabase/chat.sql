@@ -37,8 +37,12 @@ create table if not exists public.conversation_participants (
   user_id uuid not null references auth.users (id) on delete cascade,
   role text not null default 'member' check (role in ('admin', 'member')),
   joined_at timestamp with time zone not null default now(),
+  last_read_at timestamp with time zone not null default now(),
   primary key (conversation_id, user_id)
 );
+
+alter table public.conversation_participants
+  add column if not exists last_read_at timestamp with time zone not null default now();
 
 create index if not exists conversation_participants_user_idx
   on public.conversation_participants (user_id);
@@ -47,12 +51,20 @@ create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid not null references public.conversations (id) on delete cascade,
   sender_id uuid references auth.users (id) on delete set null,
-  content text not null check (length(trim(content)) > 0),
-  created_at timestamp with time zone not null default now()
+  content text not null check (length(trim(content)) > 0 and char_length(content) <= 4000),
+  created_at timestamp with time zone not null default now(),
+  edited_at timestamp with time zone
 );
+
+alter table public.messages
+  add column if not exists edited_at timestamp with time zone;
 
 create index if not exists messages_conversation_idx
   on public.messages (conversation_id, created_at asc);
+create index if not exists messages_conversation_desc_idx
+  on public.messages (conversation_id, created_at desc);
+create index if not exists messages_sender_idx
+  on public.messages (sender_id, created_at desc);
 
 -- ---------- TRIGGER: bump last_message_at ----------
 create or replace function public.touch_conversation_on_message()
@@ -262,6 +274,124 @@ $$;
 
 grant execute on function public.remove_group_member(uuid, uuid) to authenticated;
 
+-- =========================================================
+--  RPC: get_user_conversations
+--  Lista las conversaciones del usuario con metadata util
+--  (ultimo mensaje, mensajes sin leer, otro participante en
+--  privadas) en UNA sola query.  Resuelve el N+1 del cliente.
+-- =========================================================
+create or replace function public.get_user_conversations()
+returns table (
+  id uuid,
+  type text,
+  title text,
+  avatar text,
+  last_message_at timestamptz,
+  last_message_content text,
+  last_message_sender uuid,
+  unread_count int,
+  other_user_id uuid,
+  other_user_name text,
+  other_user_avatar text
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  with me as (select auth.uid() as uid)
+  select
+    c.id,
+    c.type,
+    c.title,
+    c.avatar,
+    c.last_message_at,
+    lm.content,
+    lm.sender_id,
+    (select count(*)::int from public.messages m
+       where m.conversation_id = c.id
+         and m.created_at > p.last_read_at
+         and m.sender_id <> (select uid from me)) as unread_count,
+    ou.id, ou.name, ou.avatar
+  from public.conversations c
+  join public.conversation_participants p
+       on p.conversation_id = c.id and p.user_id = (select uid from me)
+  left join lateral (
+    select content, sender_id
+      from public.messages m
+     where m.conversation_id = c.id
+     order by m.created_at desc
+     limit 1
+  ) lm on true
+  left join lateral (
+    select pr.id, pr.name, pr.avatar
+      from public.conversation_participants pp
+      join public.profiles pr on pr.id = pp.user_id
+     where pp.conversation_id = c.id
+       and pp.user_id <> (select uid from me)
+       and c.type = 'private'
+     limit 1
+  ) ou on true
+  order by c.last_message_at desc;
+$$;
+
+grant execute on function public.get_user_conversations() to authenticated;
+
+-- =========================================================
+--  RPC: get_conversation_messages  (paginado por cursor)
+-- =========================================================
+create or replace function public.get_conversation_messages(
+  conv_id uuid,
+  before_ts timestamptz default null,
+  page_limit int default 50
+)
+returns table (
+  id uuid,
+  conversation_id uuid,
+  sender_id uuid,
+  content text,
+  created_at timestamptz,
+  edited_at timestamptz,
+  sender_name text,
+  sender_avatar text
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select m.id, m.conversation_id, m.sender_id, m.content, m.created_at, m.edited_at,
+         p.name, p.avatar
+    from public.messages m
+    left join public.profiles p on p.id = m.sender_id
+   where m.conversation_id = conv_id
+     and public.is_conversation_member(conv_id, auth.uid())
+     and (before_ts is null or m.created_at < before_ts)
+   order by m.created_at desc
+   limit greatest(1, least(coalesce(page_limit, 50), 200));
+$$;
+
+grant execute on function public.get_conversation_messages(uuid, timestamptz, int) to authenticated;
+
+-- =========================================================
+--  RPC: mark_conversation_read
+-- =========================================================
+create or replace function public.mark_conversation_read(conv_id uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'No autenticado'; end if;
+  update public.conversation_participants
+     set last_read_at = now()
+   where conversation_id = conv_id and user_id = auth.uid();
+end;
+$$;
+
+grant execute on function public.mark_conversation_read(uuid) to authenticated;
+
 -- ---------- RLS ----------
 alter table public.conversations enable row level security;
 alter table public.conversation_participants enable row level security;
@@ -311,6 +441,12 @@ with check (
   sender_id = (select auth.uid())
   and public.is_conversation_member(conversation_id, (select auth.uid()))
 );
+
+drop policy if exists "Senders can edit own messages" on public.messages;
+create policy "Senders can edit own messages"
+on public.messages for update to authenticated
+using (sender_id = (select auth.uid()))
+with check (sender_id = (select auth.uid()));
 
 drop policy if exists "Senders can delete own messages" on public.messages;
 create policy "Senders can delete own messages"

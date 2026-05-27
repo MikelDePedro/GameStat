@@ -10,8 +10,30 @@ create table if not exists public.social_posts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   content text not null check (length(trim(content)) > 0),
-  created_at timestamp with time zone not null default now()
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
 );
+
+alter table public.social_posts
+  add column if not exists updated_at timestamp with time zone not null default now();
+
+alter table public.social_posts
+  drop constraint if exists social_posts_content_len_chk;
+alter table public.social_posts
+  add  constraint social_posts_content_len_chk
+  check (char_length(content) <= 2000);
+
+-- FK directa a profiles para poder embed con PostgREST.
+alter table public.social_posts
+  drop constraint if exists social_posts_user_profile_fk;
+alter table public.social_posts
+  add  constraint social_posts_user_profile_fk
+  foreign key (user_id) references public.profiles (id) on delete cascade;
+
+drop trigger if exists social_posts_set_updated_at on public.social_posts;
+create trigger social_posts_set_updated_at
+before update on public.social_posts
+for each row execute function public.tg_set_updated_at();
 
 create index if not exists social_posts_user_idx on public.social_posts (user_id, created_at desc);
 create index if not exists social_posts_created_idx on public.social_posts (created_at desc);
@@ -34,6 +56,18 @@ create table if not exists public.social_post_comments (
   content text not null check (length(trim(content)) > 0),
   created_at timestamp with time zone not null default now()
 );
+
+alter table public.social_post_comments
+  drop constraint if exists social_post_comments_content_len_chk;
+alter table public.social_post_comments
+  add  constraint social_post_comments_content_len_chk
+  check (char_length(content) <= 1000);
+
+alter table public.social_post_comments
+  drop constraint if exists social_post_comments_user_profile_fk;
+alter table public.social_post_comments
+  add  constraint social_post_comments_user_profile_fk
+  foreign key (user_id) references public.profiles (id) on delete cascade;
 
 create index if not exists social_post_comments_post_idx
   on public.social_post_comments (post_id, created_at asc);
@@ -121,3 +155,93 @@ using ((select auth.uid()) = user_id);
 -- Vista usa los privilegios del usuario: la heredamos via security_invoker
 -- (Postgres 15+). En Supabase actual ya esta soportado.
 alter view public.social_feed set (security_invoker = true);
+
+-- =========================================================
+--  RPC: get_user_feed
+--  Devuelve los posts del usuario + de los usuarios a los
+--  que sigue, con contadores y flag viewer_liked, paginado
+--  por cursor (created_at < before_ts).
+-- =========================================================
+create or replace function public.get_user_feed(
+  before_ts timestamptz default null,
+  page_limit int default 20
+)
+returns table (
+  id uuid,
+  user_id uuid,
+  content text,
+  created_at timestamptz,
+  author_name text,
+  author_avatar text,
+  likes_count int,
+  comments_count int,
+  viewer_liked boolean
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  with viewer as (select auth.uid() as uid)
+  select
+    p.id,
+    p.user_id,
+    p.content,
+    p.created_at,
+    prof.name,
+    prof.avatar,
+    (select count(*)::int from public.social_post_likes l where l.post_id = p.id),
+    (select count(*)::int from public.social_post_comments c where c.post_id = p.id),
+    exists(select 1 from public.social_post_likes l
+            where l.post_id = p.id and l.user_id = (select uid from viewer)) as viewer_liked
+  from public.social_posts p
+  join public.profiles prof on prof.id = p.user_id
+  where (
+        p.user_id = (select uid from viewer)
+     or p.user_id in (
+        select followed_id from public.follows
+         where follower_id = (select uid from viewer)
+     )
+  )
+  and (before_ts is null or p.created_at < before_ts)
+  order by p.created_at desc
+  limit greatest(1, least(coalesce(page_limit, 20), 50));
+$$;
+
+grant execute on function public.get_user_feed(timestamptz, int) to authenticated;
+
+-- =========================================================
+--  RPC: toggle_post_like  (atomico)
+--  Inserta o elimina el like del usuario; devuelve estado final.
+-- =========================================================
+create or replace function public.toggle_post_like(p_post uuid)
+returns table (liked boolean, likes_count int)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  has_like boolean;
+begin
+  if me is null then raise exception 'No autenticado'; end if;
+
+  select exists(
+    select 1 from public.social_post_likes
+     where post_id = p_post and user_id = me
+  ) into has_like;
+
+  if has_like then
+    delete from public.social_post_likes where post_id = p_post and user_id = me;
+  else
+    insert into public.social_post_likes (post_id, user_id) values (p_post, me)
+    on conflict do nothing;
+  end if;
+
+  return query
+    select (not has_like),
+           (select count(*)::int from public.social_post_likes where post_id = p_post);
+end;
+$$;
+
+grant execute on function public.toggle_post_like(uuid) to authenticated;

@@ -152,17 +152,6 @@ ion-item ion-input {
   --background: transparent;
 }
 
-/* Acceso al <input> nativo dentro del shadow DOM */
-ion-input::part(native) {
-  color: var(--app-text) !important;
-  caret-color: var(--ion-color-primary) !important;
-}
-
-ion-input::part(placeholder) {
-  color: var(--app-text-soft) !important;
-  opacity: 0.9 !important;
-}
-
 /* ---------- Textareas (BUGFIX: texto blanco sobre blanco) ---------- */
 ion-textarea {
   --background: rgba(27, 24, 46, 0.72);
@@ -185,18 +174,6 @@ ion-textarea {
 ion-textarea:focus-within {
   border-color: var(--ion-color-primary);
   box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.18);
-}
-
-/* Acceso al <textarea> nativo dentro del shadow DOM */
-ion-textarea::part(native) {
-  color: var(--app-text) !important;
-  caret-color: var(--ion-color-primary) !important;
-  background: transparent !important;
-}
-
-ion-textarea::part(placeholder) {
-  color: var(--app-text-soft) !important;
-  opacity: 0.9 !important;
 }
 
 /* Dentro de un ion-item el textarea hereda fondo del item */

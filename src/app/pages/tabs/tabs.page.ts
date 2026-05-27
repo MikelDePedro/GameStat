@@ -14,19 +14,30 @@ import {
   homeOutline,
   newspaperOutline,
   peopleOutline,
-  personCircleOutline,
   starOutline
 } from 'ionicons/icons';
 
+import { AppHeaderComponent } from '../../core/components/app-header/app-header.component';
+
 @Component({
   standalone: true,
-  imports: [IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs],
+  imports: [
+    AppHeaderComponent,
+    IonIcon,
+    IonLabel,
+    IonRouterOutlet,
+    IonTabBar,
+    IonTabButton,
+    IonTabs
+  ],
   styleUrls: ['./tabs.page.scss'],
   template: `
+    <app-header></app-header>
+
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
 
-      <ion-tab-bar slot="top">
+      <ion-tab-bar slot="bottom">
         <ion-tab-button tab="home" href="/tabs/home">
           <ion-icon name="home-outline"></ion-icon>
           <ion-label>Home</ion-label>
@@ -51,10 +62,6 @@ import {
           <ion-icon name="people-outline"></ion-icon>
           <ion-label>Users</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="profile" href="/tabs/profile">
-          <ion-icon name="person-circle-outline"></ion-icon>
-          <ion-label>Perfil</ion-label>
-        </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>
   `
@@ -67,8 +74,7 @@ export class TabsPage {
       gameControllerOutline,
       chatbubblesOutline,
       newspaperOutline,
-      peopleOutline,
-      personCircleOutline
+      peopleOutline
     });
   }
 }

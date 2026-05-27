@@ -46,17 +46,33 @@ export class ProfileService {
   async search(query: string, limit = 30): Promise<UserProfile[]> {
     const client = this.supabaseService.assertConfigured();
     const clean = query.trim();
-    let req = client
+
+    // Si hay texto: usar RPC `search_profiles` (trigram, ranking por
+    // similitud, excluye al propio usuario). Si no, listar todos.
+    if (clean) {
+      const { data, error } = await client.rpc('search_profiles', {
+        q: clean,
+        max_results: Math.min(Math.max(limit, 1), 50)
+      });
+      if (error) throw new Error(this.mapError(error.message));
+      // search_profiles devuelve sin email/favorite_game -> los rellenamos vacios.
+      return ((data as Array<{ id: string; name: string; avatar: string; bio: string }> | null) ?? [])
+        .map((r) => ({
+          id: r.id,
+          email: '',
+          name: r.name,
+          favoriteGame: '',
+          bio: r.bio ?? '',
+          avatar: r.avatar || this.initials(r.name)
+        }));
+    }
+
+    const { data, error } = await client
       .from('profiles')
       .select('id, email, name, favorite_game, bio, avatar')
       .order('name', { ascending: true })
       .limit(limit);
 
-    if (clean) {
-      req = req.ilike('name', `%${clean}%`);
-    }
-
-    const { data, error } = await req;
     if (error) throw new Error(this.mapError(error.message));
     return ((data as ProfileRow[] | null) ?? []).map((r) => this.mapRow(r));
   }

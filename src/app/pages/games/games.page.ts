@@ -29,6 +29,7 @@ import {
 
 import { RawgGame, RawgGamesPage } from '../../core/models/rawg.models';
 import { AuthService } from '../../core/services/auth.service';
+import { FavoritesService } from '../../core/services/favorites.service';
 import { GamesService } from '../../core/services/games.service';
 
 @Component({
@@ -50,7 +51,7 @@ import { GamesService } from '../../core/services/games.service';
 export class GamesPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchTerms$ = new Subject<string>();
-  readonly supabaseSyncEnabled = this.gamesService.supportsSupabaseSync();
+  readonly favorites = inject(FavoritesService);
 
   readonly fallbackCover = 'https://via.placeholder.com/400x240?text=Sin+imagen';
 
@@ -62,10 +63,6 @@ export class GamesPage implements OnInit {
   hasNextPage = true;
   currentPage = 1;
   errorMessage = '';
-
-  favoritesError = '';
-  favoriteIds = new Set<number>();
-  private favoriteLoadingIds = new Set<number>();
 
   constructor(
     private readonly gamesService: GamesService,
@@ -83,10 +80,6 @@ export class GamesPage implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.supabaseSyncEnabled) {
-      this.loadFavoriteIds();
-    }
-
     this.searchTerms$.next('');
   }
 
@@ -155,61 +148,20 @@ export class GamesPage implements OnInit {
   }
 
   toggleFavorite(game: RawgGame): void {
-    if (!this.supabaseSyncEnabled) {
-      this.favoritesError =
-        'Favoritos desactivados. Activa rawg.syncWithSupabase y crea las tablas en Supabase.';
-      return;
-    }
-
-    const userId = this.authService.currentUser()?.id;
-
-    if (!userId) {
-      this.favoritesError = 'Inicia sesion para guardar favoritos en Supabase.';
-      return;
-    }
-
-    this.favoritesError = '';
-    const currentlyFavorite = this.favoriteIds.has(game.id);
-    this.favoriteLoadingIds.add(game.id);
-
-    const request$ = currentlyFavorite
-      ? this.gamesService.removeFavoriteGame(userId, game.id)
-      : this.gamesService.saveFavoriteGame(userId, game);
-
-    request$
-      .pipe(
-        finalize(() => {
-          this.favoriteLoadingIds.delete(game.id);
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: () => {
-          if (currentlyFavorite) {
-            this.favoriteIds.delete(game.id);
-          } else {
-            this.favoriteIds.add(game.id);
-          }
-
-          this.favoriteIds = new Set(this.favoriteIds);
-        },
-        error: (error: Error) => {
-          this.favoritesError = error.message;
-        }
-      });
+    void this.favorites.toggle(game);
   }
 
   isFavorite(gameId: number): boolean {
-    return this.favoriteIds.has(gameId);
+    return this.favorites.isFavorite(gameId);
   }
 
   isFavoriteLoading(gameId: number): boolean {
-    return this.favoriteLoadingIds.has(gameId);
+    return this.favorites.isLoading(gameId);
   }
 
   retryFavorites(): void {
-    this.favoritesError = '';
-    this.loadFavoriteIds();
+    this.favorites.clearError();
+    void this.favorites.refresh();
   }
 
   trackByGameId(_: number, game: RawgGame): number {
@@ -270,28 +222,8 @@ export class GamesPage implements OnInit {
     };
   }
 
-  private loadFavoriteIds(): void {
-    const userId = this.authService.currentUser()?.id;
-
-    if (!userId) {
-      return;
-    }
-
-    this.gamesService
-      .getFavoriteGames(userId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (ids) => {
-          this.favoriteIds = new Set(ids);
-        },
-        error: (error: Error) => {
-          this.favoritesError = error.message;
-        }
-      });
-  }
-
   private syncGamesWithSupabase(games: RawgGame[]): void {
-    if (!this.supabaseSyncEnabled || !games.length || !this.authService.currentUser()) {
+    if (!this.gamesService.supportsSupabaseSync() || !games.length || !this.authService.currentUser()) {
       return;
     }
 

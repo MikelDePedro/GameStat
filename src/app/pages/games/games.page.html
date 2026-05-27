@@ -20,17 +20,13 @@
           Reintentar
         </ion-button>
 
-        <ion-text color="warning" *ngIf="favoritesError">
-          <p>{{ favoritesError }}</p>
+        <ion-text color="warning" *ngIf="favorites.error() as favError">
+          <p>{{ favError }}</p>
         </ion-text>
 
-        <ion-button *ngIf="favoritesError" fill="outline" size="small" (click)="retryFavorites()">
+        <ion-button *ngIf="favorites.error()" fill="outline" size="small" (click)="retryFavorites()">
           Reintentar favoritos
         </ion-button>
-
-        <ion-text color="medium" *ngIf="!supabaseSyncEnabled">
-          <p>Favoritos en Supabase desactivados. Configura Supabase en environment.ts</p>
-        </ion-text>
       </section>
 
       <section class="surface-card loading-state" *ngIf="isLoading">

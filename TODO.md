@@ -1,82 +1,195 @@
-# TODO GameStat (Ionic + Angular + Supabase)
+# GAMESTAT — Pendientes para Nivel 5 (Sobresaliente) en los 7 bloques
 
-## 1. Inicio y configuración local
-- [x] `npm install`
-- [x] `ionic serve` / `npm start`
-- [x] `.gitignore`
-- [x] `README.md`
+Estado a fecha 2026-05-26. Bloques 1, 2 y 3 **completados**. Quedan 4, 5, 6 y 7.
 
-## 2. Arquitectura backend
-- [x] Diseñar ERD completo (profiles, follows, social_posts/likes/comments, conversations, conversation_participants, messages, game_reviews, rawg_games, favorite_games)
-- [x] Crear tablas faltantes (ver `supabase/`)
-- [x] RLS activado y políticas por tabla
-- [x] RPCs para chat (`get_or_create_private_conversation`, `create_group_conversation`, `add_group_member`, `remove_group_member`)
-- [x] Variables entorno (`supabase.url`, `supabase.anonKey`)
-- [x] Servicios Angular (`AuthService`, `SocialService`, `ChatService`, `FollowService`, `ProfileService`, `GamesService`)
-
-## 3. Auth
-- [x] Login / Register / Logout
-- [x] Persistencia con sesión Supabase
-- [x] `auth.guard.ts`
-
-## 4. UI
-- [x] Landing, Tabs, Home
-- [x] Profile propio + perfil de otros (`/profile/:userId`)
-- [x] Reviews
-- [x] Social hub (chats privados + grupos)
-- [x] Chat detail con realtime
-- [x] Feed social conectado a Supabase
-- [x] Users (búsqueda + follow + abrir chat)
-
-## 5. Chat
-- [x] Modelos (`Conversation`, `ConversationParticipant`, `ChatMessage`)
-- [x] Servicio chat conectado a Supabase
-- [x] UI: lista de conversaciones + detalle
-- [x] Persistencia real
-- [x] Realtime (postgres_changes en `messages`, `conversation_participants`)
-- [x] Crear grupo (RPC `create_group_conversation`)
-- [x] Iniciar chat privado sin duplicados (RPC `get_or_create_private_conversation`)
-- [x] Salir / añadir miembros en grupo
-
-## 6. Social
-- [x] Follow / unfollow + contadores
-- [x] Ver perfiles ajenos
-- [x] Feed real con posts, likes y comentarios (CRUD + realtime)
-
-## 7. Testing
-- [ ] Unit tests de servicios (TODO: añadir tests para `SocialService`, `ChatService`, `FollowService`)
-- [ ] E2E (TODO: Cypress)
-
-## 8. Deploy
-- [x] Build (`npm run build`)
-- [x] Despliegue (Netlify / Vercel)
-- [ ] CI/CD (GitHub Actions)
-
-## 9. Docs
-- [x] `supabase/README.md` (orden de migraciones)
-- [ ] Manual de usuario
-- [ ] Manual de despliegue
-
-## 10. Mejoras posteriores
-- [x] RAWG API
-- [ ] Push notifications
-- [ ] Métricas / dashboard
-- [ ] i18n
+Leyenda: `[ ]` pendiente · `[~]` parcial · `[x]` hecho
 
 ---
 
-## Bugs resueltos
-1. ~~No funciona crear una review.~~ → ejecuta `supabase/game_reviews.sql`.
-2. ~~No funciona crear opinión de un juego.~~ → mismo script.
-3. ~~Los posts solo se guardan en sesión.~~ → ahora se persisten en `social_posts` con realtime.
+## ✅ Bloque 1 — Acceso a Datos (Supabase + PostgreSQL) — HECHO
 
-## Acción manual requerida en Supabase
-Ejecutar en este orden desde el SQL editor:
-1. `supabase/profiles.sql`
-2. `supabase/rawg_games.sql`
-3. `supabase/game_reviews.sql`
-4. `supabase/follows.sql`
-5. `supabase/social_posts.sql`
-6. `supabase/chat.sql`
-7. `supabase/realtime.sql`
-8. (Opcional) crear usuarios demo en Auth y luego `supabase/seed_demo.sql` con los UUID reales.
+- [x] Extensiones (`pgcrypto`, `pg_trgm`, `citext`) en `supabase/00_extensions.sql`
+- [x] Trigger genérico `tg_set_updated_at` en `supabase/_shared.sql`
+- [x] `profiles`: `updated_at`, checks de longitud, índice trigram, RPC `search_profiles`
+- [x] `follows`: RPCs `is_following`, `get_follow_counts`, `list_followers`, `list_following`
+- [x] `game_reviews`: `updated_at`, unique `(user_id, rawg_id)`, FK a `profiles`, RPCs `get_review_stats`, `get_user_review_stats`
+- [x] `social_posts`: `updated_at`, FK a `profiles`, RPCs `get_user_feed`, `toggle_post_like`
+- [x] `chat`: `last_read_at`, `edited_at`, índices extra, política UPDATE messages, RPCs `get_user_conversations`, `get_conversation_messages`, `mark_conversation_read`
+- [x] `rawg_games`: RLS sin DELETE para `authenticated`, check `rating`, trigger `updated_at`
+- [x] `realtime.sql` idempotente con `conversation_participants` y `follows`
+- [x] README de la BBDD actualizado
+
+> Acción manual pendiente: ejecutar los `.sql` en el SQL Editor de Supabase en el orden del `supabase/README.md`.
+
+---
+
+## ✅ Bloque 2 — Desarrollo de Interfaces (Ionic + Angular) — HECHO (base)
+
+- [x] Componentes reutilizables `app-user-avatar`, `app-rating-stars`, `app-empty-state`
+- [x] Pipe `timeAgo`
+- [x] Animación nativa Ionic personalizada (`pageTransitionAnimation`) registrada globalmente
+- [x] Barrel `src/app/shared/index.ts`
+
+### Pendiente para refinar Nivel 5
+
+- [ ] Adoptar `UserAvatarComponent` en todas las páginas que usen avatares manualmente (`feed.page`, `chat-detail.page`, `social.page`, `profile.page`, `app-header`, `users.page`).
+- [ ] Adoptar `RatingStarsComponent` en `review-detail.page`, `review.page` (form) y `game.page`.
+- [ ] Adoptar `EmptyStateComponent` en estados vacíos / error de `feed`, `social`, `games`, `users`.
+- [ ] Sustituir `formatDate(...)` manual del `SocialService` por `| timeAgo` en plantillas.
+- [ ] Auditar **responsive**: probar 360px, 768px, 1024px, 1440px. Ajustar `card-grid` y `page-shell` si rompen.
+- [ ] Validación de formularios reactiva con mensajes accesibles (`aria-describedby`) en `login`, `register`, `review` (form).
+- [ ] Skeletons de carga (`<ion-skeleton-text>`) en feed, lista de chats y detalle de juego en vez de `ion-spinner` plano.
+- [ ] Aplicar `fadeInUp` a las cards del feed cuando aparecen.
+
+---
+
+## ✅ Bloque 3 — Sociales y Reseñas — HECHO (core)
+
+- [x] `social.service` con feed paginado por cursor (`loadFeed`, `loadMoreFeed`, `refreshFeed`)
+- [x] `toggle_post_like` atómico en servidor
+- [x] Realtime granular (deltas en likes/comments, no recarga total)
+- [x] `getReviewStats` y `getUserReviewStats`
+- [x] `follow.service` con RPCs + realtime filtrado por `follower_id`
+- [x] `profile.service.search` usando RPC `search_profiles`
+
+### Pendiente
+
+- [ ] UI de paginación: en `feed.page`, `<ion-infinite-scroll>` que llame a `social.loadMoreFeed()`.
+- [ ] Componente `ReviewStatsCardComponent` (shared) que pinte la distribución 1-10 con barras y media, y consumirlo en `game.page` y `review-detail.page`.
+- [ ] Sección "Seguidores / Siguiendo" en `profile.page` consumiendo `follow.listFollowers/listFollowing` con paginación.
+- [ ] Documentar JSDoc en cada método público de los servicios (entrada, salida, errores).
+
+---
+
+## 🟡 Bloque 4 — Servicios y Procesos (chat robusto)
+
+### 4.1 Refactor de `chat.service.ts` a las nuevas RPCs
+
+- [ ] Reemplazar `loadConversations` por una llamada a la RPC `get_user_conversations` (incluye unread, último mensaje y otro participante en una sola query).
+- [ ] Cargar mensajes con `get_conversation_messages(conv_id, before_ts, page_limit)` y mantener cursor para paginación hacia atrás (scroll-up infinito).
+- [ ] Llamar a `mark_conversation_read(conv_id)` cuando el usuario abre o vuelve a foco una conversación.
+- [ ] Exponer `unreadCount` por conversación como `signal` y un `totalUnread = computed(...)` para badges del tab social.
+- [ ] Soporte a edición de mensajes propios usando la política UPDATE recién añadida (`edited_at`).
+
+### 4.2 Soporte offline
+
+- [ ] Instalar `@capacitor/network` y `@capacitor/preferences`.
+- [ ] Crear `core/services/network.service.ts`: signal `online: Signal<boolean>` alimentado por `Network.addListener('networkStatusChange', ...)` y `Network.getStatus()`.
+- [ ] Crear `core/services/offline-queue.service.ts`:
+  - [ ] API: `enqueue(action)`, `flush()`, `pending = signal<...>`.
+  - [ ] Persistencia con `Preferences.set/get` clave `gamestat.outbox.v1`.
+  - [ ] Tipos de acción soportados: `send_message`, `create_post`, `toggle_like`.
+  - [ ] Reintento con backoff exponencial al recuperar conexión.
+- [ ] Integrar en `chat.service.sendMessage`: si `!network.online()`, enqueue + mostrar el mensaje en UI con estado `pending` y reintento.
+- [ ] Integrar en `social.service.createPost` y `toggleLike`.
+- [ ] Banner global en `app.component` cuando `!online` (componente reutilizable `app-offline-banner`).
+
+### 4.3 Accesibilidad y robustez del chat
+
+- [ ] Atajos teclado: `Enter` envía, `Shift+Enter` salto de línea.
+- [ ] `aria-live="polite"` en el contenedor de mensajes para lectores de pantalla.
+- [ ] Auto-scroll al final solo si el usuario ya estaba al final (evita interrumpir scroll manual).
+- [ ] Indicador de "escribiendo..." usando `presence` de Supabase Realtime (opcional, valor diferencial).
+- [ ] Reconexión automática: re-suscribir canales tras volver online (`onAuthStateChange` + reset).
+
+### 4.4 Gestión avanzada de participantes en grupos
+
+- [ ] UI de gestión de grupo (`chat-detail.page`): listar miembros con rol, "promote to admin", "remove", "leave group".
+- [ ] Llamadas a RPCs ya existentes: `add_group_member`, `remove_group_member`.
+- [ ] Crear RPC adicional `promote_group_member(conv_id, user_id)` en `supabase/chat.sql` (solo admin).
+- [ ] Crear grupo desde la UI con autocompletado de miembros usando `search_profiles`.
+
+---
+
+## 🟡 Bloque 5 — Seguridad, Infraestructura y Despliegue
+
+### 5.1 Variables de entorno separadas y secrets
+
+- [ ] Quitar las keys hardcodeadas de `src/environments/environment.ts` y `environment.prod.ts`. Cargar `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `RAWG_API_KEY` desde un archivo no comiteado (`environment.local.ts`) y/o variables `process.env.*` inyectadas en build.
+- [ ] Añadir `environment.local.ts` al `.gitignore`.
+- [ ] Documentar en `README.md` cómo crear el archivo local.
+- [ ] Crear `.env.example` con las claves vacías para referencia.
+- [ ] **Rotar la anon key actual** (ya está comiteada en git).
+
+### 5.2 CI/CD con GitHub Actions
+
+- [ ] `.github/workflows/ci.yml`: en cada push/PR → `npm ci` → `npm run lint` → `npm test -- --watch=false --browsers=ChromeHeadless` → `npm run build`.
+- [ ] `.github/workflows/deploy-web.yml`: en push a `main` → build → deploy a Vercel (token en secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`).
+- [ ] `.github/workflows/build-android.yml`: en push a tags `v*` → `npm run build` → `cap sync android` → `./gradlew assembleRelease` → subir APK como artifact (firmado con keystore en secrets).
+- [ ] Badges de estado de los workflows en `README.md`.
+
+### 5.3 Tests automatizados
+
+- [ ] Configurar Karma+Jasmine ya presente y añadir mocks de `SupabaseService` (clase fake con `client = stub`).
+- [ ] Unit tests prioritarios:
+  - [ ] `AuthService` (login, register, mapAuthError, logout).
+  - [ ] `SocialService.toggleLike` (optimista + rollback + reconciliación).
+  - [ ] `FollowService.getStats` (RPCs).
+  - [ ] `OfflineQueueService` (enqueue, flush, persistencia).
+  - [ ] `TimeAgoPipe`.
+- [ ] Tests de componente:
+  - [ ] `UserAvatarComponent` (URL vs iniciales).
+  - [ ] `RatingStarsComponent` (readonly vs interactivo, emit).
+  - [ ] `EmptyStateComponent` (variantes + CTA).
+- [ ] Cobertura mínima 70% global / 80% en `core/services`.
+- [ ] (Opcional) Cypress o Playwright para 2-3 flujos E2E: login, publicar post, enviar mensaje.
+
+### 5.4 Despliegue producción
+
+- [ ] Proyecto creado en Vercel con dominio HTTPS (verificar `vercel.json`).
+- [ ] CSP headers en `vercel.json` (`Content-Security-Policy`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`).
+- [ ] Confirmar RLS activa en producción mediante el dashboard de Supabase ("Database → Tables → RLS enabled" en todas).
+- [ ] Documentar en `docs/SECURITY.md` la política de seguridad (RLS, JWT, secrets, threat model abreviado).
+
+---
+
+## 🟡 Bloque 6 — Programación Multimedia y Móviles (Capacitor / Android)
+
+- [ ] `capacitor.config.ts`: verificar `appId`, `appName`, `webDir: 'www'`, `server.androidScheme: 'https'`.
+- [ ] Generar icono y splash con `@capacitor/assets`: `npx @capacitor/assets generate --android` a partir de un `assets/icon.png` y `assets/splash.png`.
+- [ ] Plugins Capacitor:
+  - [ ] `@capacitor/status-bar` (color de la barra coherente con el tema).
+  - [ ] `@capacitor/keyboard` (ajuste de viewport al abrir teclado en el chat).
+  - [ ] `@capacitor/haptics` (feedback al dar like / enviar mensaje).
+  - [ ] `@capacitor/share` (compartir review/post fuera de la app).
+- [ ] Hardware back button → cerrar modales / volver dentro del stack del router.
+- [ ] Comprobar safe-area-insets en Android 14+ (`env(safe-area-inset-*)`) en `tabs.page.scss` y `app-header`.
+- [ ] Probar APK release firmado en al menos 2 densidades distintas (mdpi/xxhdpi).
+- [ ] Documentar diferencias intencionadas entre Web y Android (si las hay) en `docs/PLATFORMS.md`.
+- [ ] Script `npm run apk:release` (en `package.json`) que haga build + sync + assembleRelease.
+
+---
+
+## 🟡 Bloque 7 — Documentación y Gestión
+
+Crear carpeta `docs/` con:
+
+- [ ] `docs/ARCHITECTURE.md` — diagramas C4 (contexto, contenedores, componentes) en Mermaid + decisiones técnicas justificadas (BaaS vs backend propio, signals vs RxJS, etc.).
+- [ ] `docs/DATA-MODEL.md` — diagrama ER + descripción de cada tabla, política RLS y RPC en lenguaje natural.
+- [ ] `docs/SECURITY.md` — RLS, JWT, secrets, dependencias auditadas (`npm audit`), CSP.
+- [ ] `docs/SCHEDULE.md` — cronograma del TFG (Gantt en Mermaid) con hitos y horas estimadas vs reales.
+- [ ] `docs/BUDGET.md` — presupuesto (horas × tarifa) y costes mensuales reales (Supabase free, Vercel free, dominio, Play Store).
+- [ ] `docs/CHANGELOG.md` — historial de versiones desde v0.1 hasta la entrega.
+- [ ] `docs/USER-MANUAL.md` — manual de usuario con capturas (registro, feed, chat, perfil).
+- [ ] `README.md` raíz: pulir con badges, screenshots, "Getting started", "Stack", enlaces a `docs/`.
+
+---
+
+## 📋 Orden sugerido para próximas sesiones
+
+1. **Bloque 4.1** (refactor chat a RPCs) — 1 sesión.
+2. **Bloque 4.2** (offline queue + network service) — 1 sesión.
+3. **Bloque 4.3 + 4.4** (UX chat, grupos) — 1 sesión.
+4. **Bloque 5.1** (rotar key + envs separadas) — urgente, 30 min.
+5. **Bloque 5.2** (CI/CD) — 1 sesión.
+6. **Bloque 5.3** (tests) — 1-2 sesiones.
+7. **Bloque 6** (Capacitor) — 1 sesión.
+8. **Bloque 7** (documentación) — 1 sesión final.
+
+---
+
+## ⚠️ Acciones críticas y de seguridad inmediatas
+
+- [ ] **Rotar `SUPABASE_ANON_KEY`** desde el dashboard (clave actual comiteada en repo público).
+- [ ] Ejecutar todos los `.sql` actualizados en Supabase para activar las nuevas RPCs e índices.
+- [ ] Si el proyecto es público en GitHub: revisar histórico con `git log -p -- src/environments/environment.ts` y considerar `git filter-repo` para limpiar la clave antigua del histórico.

@@ -1,9 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
-import { ReviewItem, SocialComment, SocialPost } from '../../models';
+import { ReviewItem, ReviewStats, SocialComment, SocialPost, UserReviewStats } from '../../models';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
+
+const FEED_PAGE_SIZE = 20;
 
 // ---------- Filas Supabase ----------
 interface ReviewRow {
@@ -28,6 +30,20 @@ interface SocialFeedRow {
   author_avatar: string | null;
   likes_count: number;
   comments_count: number;
+  viewer_liked?: boolean;
+}
+
+interface ReviewStatsRow {
+  total_count: number;
+  avg_rating: number;
+  rating_1: number; rating_2: number; rating_3: number; rating_4: number; rating_5: number;
+  rating_6: number; rating_7: number; rating_8: number; rating_9: number; rating_10: number;
+}
+
+interface UserReviewStatsRow {
+  total_count: number;
+  avg_rating: number;
+  last_review_at: string | null;
 }
 
 interface SocialPostRow {
@@ -67,9 +83,18 @@ export class SocialService {
   readonly reviews = signal<ReviewItem[]>([]);
   readonly posts = signal<SocialPost[]>([]);
   readonly loadingPosts = signal(false);
+  readonly loadingMore = signal(false);
+  readonly hasMore = signal(true);
+
+  /** Timestamp ISO del post mas antiguo cargado (cursor para paginar). */
+  readonly oldestCursor = computed(() => {
+    const arr = this.posts();
+    return arr.length ? arr[arr.length - 1].createdAtTimestamp : null;
+  });
 
   private postsChannel: RealtimeChannel | null = null;
   private likesChannel: RealtimeChannel | null = null;
+  private commentsChannel: RealtimeChannel | null = null;
   private initialized = false;
 
   constructor(
@@ -91,7 +116,7 @@ export class SocialService {
     await this.auth.waitUntilReady();
     await Promise.all([
       this.loadReviews().catch((e) => console.error('reviews:', e)),
-      this.loadPosts().catch((e) => console.error('posts:', e))
+      this.loadFeed().catch((e) => console.error('feed:', e))
     ]);
     this.subscribeRealtime();
   }
@@ -102,28 +127,90 @@ export class SocialService {
 
     this.postsChannel?.unsubscribe();
     this.likesChannel?.unsubscribe();
+    this.commentsChannel?.unsubscribe();
 
+    // Posts: refresca top del feed solo para INSERT (mas eficiente).
     this.postsChannel = client
       .channel('social_posts_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'social_posts' },
-        () => {
-          void this.loadPosts();
+        { event: 'INSERT', schema: 'public', table: 'social_posts' },
+        () => { void this.refreshFeed(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'social_posts' },
+        (payload) => {
+          const removed = (payload.old as { id?: string } | null)?.id;
+          if (removed) {
+            this.posts.update((items) => items.filter((p) => p.id !== removed));
+          }
         }
       )
       .subscribe();
 
+    // Likes: aplica delta sobre el post afectado, sin recargar todo.
+    const me = () => this.auth.currentUser()?.id ?? null;
     this.likesChannel = client
       .channel('social_post_likes_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'social_post_likes' },
-        () => {
-          void this.loadPosts();
+        { event: 'INSERT', schema: 'public', table: 'social_post_likes' },
+        (payload) => {
+          const row = payload.new as { post_id: string; user_id: string };
+          this.applyLikeDelta(row.post_id, +1, row.user_id === me());
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'social_post_likes' },
+        (payload) => {
+          const row = payload.old as { post_id: string; user_id: string };
+          this.applyLikeDelta(row.post_id, -1, row.user_id === me() ? false : null);
         }
       )
       .subscribe();
+
+    // Comentarios: solo contador.
+    this.commentsChannel = client
+      .channel('social_post_comments_changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'social_post_comments' },
+        (payload) => {
+          const postId = (payload.new as { post_id?: string } | null)?.post_id;
+          if (postId) this.applyCommentDelta(postId, +1);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'social_post_comments' },
+        (payload) => {
+          const postId = (payload.old as { post_id?: string } | null)?.post_id;
+          if (postId) this.applyCommentDelta(postId, -1);
+        }
+      )
+      .subscribe();
+  }
+
+  private applyLikeDelta(postId: string, delta: number, viewerLiked: boolean | null): void {
+    this.posts.update((items) =>
+      items.map((p) => {
+        if (p.id !== postId) return p;
+        const next: SocialPost = {
+          ...p,
+          likes: Math.max(0, p.likes + delta)
+        };
+        if (viewerLiked !== null) next.liked = viewerLiked;
+        return next;
+      })
+    );
+  }
+
+  private applyCommentDelta(postId: string, delta: number): void {
+    this.posts.update((items) =>
+      items.map((p) => (p.id === postId ? { ...p, comments: Math.max(0, p.comments + delta) } : p))
+    );
   }
 
   // -------------------------------------------------------------------
@@ -206,39 +293,77 @@ export class SocialService {
   }
 
   // -------------------------------------------------------------------
-  // POSTS
+  // POSTS / FEED
   // -------------------------------------------------------------------
-  async loadPosts(): Promise<void> {
+
+  /**
+   * Carga la primera pagina del feed personalizado (posts del usuario
+   * + los de gente que sigue) via RPC `get_user_feed`. Resetea cursor.
+   */
+  async loadFeed(): Promise<void> {
     const client = this.supabaseService.client;
     if (!client) return;
-    const me = this.auth.currentUser()?.id ?? null;
 
     this.loadingPosts.set(true);
     try {
-      const { data, error } = await client
-        .from('social_feed')
-        .select('id, user_id, content, created_at, author_name, author_avatar, likes_count, comments_count')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
+      const { data, error } = await client.rpc('get_user_feed', {
+        before_ts: null,
+        page_limit: FEED_PAGE_SIZE
+      });
       if (error) throw new Error(this.mapError(error.message, 'social_posts'));
-
-      let likedIds = new Set<string>();
-      if (me) {
-        const { data: likes } = await client
-          .from('social_post_likes')
-          .select('post_id')
-          .eq('user_id', me);
-        likedIds = new Set(((likes as { post_id: string }[] | null) ?? []).map((l) => l.post_id));
-      }
-
-      this.posts.set(
-        ((data as SocialFeedRow[] | null) ?? []).map((row) =>
-          this.mapFeedRow(row, likedIds.has(row.id))
-        )
-      );
+      const rows = (data as SocialFeedRow[] | null) ?? [];
+      this.posts.set(rows.map((r) => this.mapFeedRow(r, r.viewer_liked ?? false)));
+      this.hasMore.set(rows.length === FEED_PAGE_SIZE);
     } finally {
       this.loadingPosts.set(false);
+    }
+  }
+
+  /** Alias retrocompatible. */
+  async loadPosts(): Promise<void> {
+    return this.loadFeed();
+  }
+
+  /** Refresca solo los posts mas recientes (no resetea los ya cargados). */
+  async refreshFeed(): Promise<void> {
+    const client = this.supabaseService.client;
+    if (!client) return;
+    const { data, error } = await client.rpc('get_user_feed', {
+      before_ts: null,
+      page_limit: FEED_PAGE_SIZE
+    });
+    if (error) return; // silencioso: es un refresh oportunista
+    const rows = (data as SocialFeedRow[] | null) ?? [];
+    const existingIds = new Set(this.posts().map((p) => p.id));
+    const fresh = rows
+      .filter((r) => !existingIds.has(r.id))
+      .map((r) => this.mapFeedRow(r, r.viewer_liked ?? false));
+    if (fresh.length) {
+      this.posts.update((items) => [...fresh, ...items]);
+    }
+  }
+
+  /** Carga la siguiente pagina usando el cursor del ultimo post visible. */
+  async loadMoreFeed(): Promise<void> {
+    if (this.loadingMore() || !this.hasMore()) return;
+    const client = this.supabaseService.client;
+    if (!client) return;
+    const cursorTs = this.oldestCursor();
+    if (cursorTs === null) return;
+
+    this.loadingMore.set(true);
+    try {
+      const { data, error } = await client.rpc('get_user_feed', {
+        before_ts: new Date(cursorTs).toISOString(),
+        page_limit: FEED_PAGE_SIZE
+      });
+      if (error) throw new Error(this.mapError(error.message, 'social_posts'));
+      const rows = (data as SocialFeedRow[] | null) ?? [];
+      const mapped = rows.map((r) => this.mapFeedRow(r, r.viewer_liked ?? false));
+      this.posts.update((items) => [...items, ...mapped]);
+      this.hasMore.set(rows.length === FEED_PAGE_SIZE);
+    } finally {
+      this.loadingMore.set(false);
     }
   }
 
@@ -297,38 +422,75 @@ export class SocialService {
     const client = this.supabaseService.assertConfigured();
 
     const current = this.posts().find((p) => p.id === postId);
-    const liked = current?.liked ?? false;
+    const prevLiked = current?.liked ?? false;
+    const prevCount = current?.likes ?? 0;
 
-    // Optimista
+    // UI optimista
     this.posts.update((items) =>
       items.map((p) =>
         p.id === postId
-          ? { ...p, liked: !liked, likes: Math.max(0, p.likes + (liked ? -1 : 1)) }
+          ? { ...p, liked: !prevLiked, likes: Math.max(0, prevCount + (prevLiked ? -1 : 1)) }
           : p
       )
     );
 
-    const result = liked
-      ? await client.from('social_post_likes').delete().eq('post_id', postId).eq('user_id', me.id)
-      : await client
-          .from('social_post_likes')
-          .upsert({ post_id: postId, user_id: me.id }, { onConflict: 'post_id,user_id' });
-
-    if (result.error) {
+    const { data, error } = await client.rpc('toggle_post_like', { p_post: postId });
+    if (error) {
       // Rollback
       this.posts.update((items) =>
         items.map((p) =>
-          p.id === postId
-            ? { ...p, liked, likes: Math.max(0, p.likes + (liked ? 1 : -1)) }
-            : p
+          p.id === postId ? { ...p, liked: prevLiked, likes: prevCount } : p
         )
       );
-      throw new Error(this.mapError(result.error.message, 'social_post_likes'));
+      throw new Error(this.mapError(error.message, 'social_post_likes'));
+    }
+
+    // Reconcilia con el valor autoritativo del servidor
+    const row = ((data as { liked: boolean; likes_count: number }[] | null) ?? [])[0];
+    if (row) {
+      this.posts.update((items) =>
+        items.map((p) =>
+          p.id === postId ? { ...p, liked: row.liked, likes: row.likes_count } : p
+        )
+      );
     }
   }
 
   hasLikedPost(postId: string): boolean {
     return this.posts().find((p) => p.id === postId)?.liked ?? false;
+  }
+
+  // -------------------------------------------------------------------
+  // REVIEW STATS
+  // -------------------------------------------------------------------
+  async getReviewStats(rawgId: number): Promise<ReviewStats> {
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client.rpc('get_review_stats', { p_rawg_id: rawgId });
+    if (error) throw new Error(this.mapError(error.message, 'game_reviews'));
+    const row = ((data as ReviewStatsRow[] | null) ?? [])[0];
+    if (!row) {
+      return { totalCount: 0, avgRating: 0, distribution: new Array(10).fill(0) };
+    }
+    return {
+      totalCount: row.total_count ?? 0,
+      avgRating: Number(row.avg_rating ?? 0),
+      distribution: [
+        row.rating_1, row.rating_2, row.rating_3, row.rating_4, row.rating_5,
+        row.rating_6, row.rating_7, row.rating_8, row.rating_9, row.rating_10
+      ].map((n) => Number(n ?? 0))
+    };
+  }
+
+  async getUserReviewStats(userId: string): Promise<UserReviewStats> {
+    const client = this.supabaseService.assertConfigured();
+    const { data, error } = await client.rpc('get_user_review_stats', { p_user: userId });
+    if (error) throw new Error(this.mapError(error.message, 'game_reviews'));
+    const row = ((data as UserReviewStatsRow[] | null) ?? [])[0];
+    return {
+      totalCount: row?.total_count ?? 0,
+      avgRating: Number(row?.avg_rating ?? 0),
+      lastReviewAt: row?.last_review_at ?? null
+    };
   }
 
   // -------------------------------------------------------------------

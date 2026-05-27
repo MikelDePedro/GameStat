@@ -1,12 +1,31 @@
 -- =========================================================
 --  realtime.sql
---  Habilita la publicación realtime de Supabase en las
+--  Habilita la publicacion realtime de Supabase en las
 --  tablas que el frontend escucha.
---  Ejecutar UNA vez después de crear las tablas.
+--  Idempotente: comprueba antes de anadir.
 -- =========================================================
 
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.conversations;
-alter publication supabase_realtime add table public.social_posts;
-alter publication supabase_realtime add table public.social_post_likes;
-alter publication supabase_realtime add table public.social_post_comments;
+do $$
+declare
+  t text;
+  tables text[] := array[
+    'messages',
+    'conversations',
+    'conversation_participants',
+    'social_posts',
+    'social_post_likes',
+    'social_post_comments',
+    'follows'
+  ];
+begin
+  foreach t in array tables loop
+    if not exists (
+      select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end$$;

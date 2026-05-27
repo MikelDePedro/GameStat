@@ -90,6 +90,29 @@ export interface FollowStats {
   isFollowing: boolean;
 }
 
+export interface ProfileSummary {
+  id: string;
+  name: string;
+  avatar: string;
+  bio: string;
+  followedAt?: string;
+  viewerFollows?: boolean;
+}
+
+// ---------- REVIEW STATS ----------
+export interface ReviewStats {
+  totalCount: number;
+  avgRating: number;
+  /** distribucion[k-1] = nº de reviews con rating == k (k de 1 a 10) */
+  distribution: number[];
+}
+
+export interface UserReviewStats {
+  totalCount: number;
+  avgRating: number;
+  lastReviewAt: string | null;
+}
+
 // ---------- LEGACY (compat) ----------
 // Algunas vistas antiguas pueden seguir importando estos tipos.
 export type ChatRoom = Conversation;
