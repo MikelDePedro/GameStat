@@ -1,6 +1,6 @@
 # GAMESTAT
 
-> Red social ligera para reseñar y comentar videojuegos. **Ionic 8 + Angular 17 + Supabase + Capacitor 7**.
+Red social ligera para reseñar y comentar videojuegos. **Ionic 8 + Angular 17 + Supabase + Capacitor 7**.
 
 ---
 
