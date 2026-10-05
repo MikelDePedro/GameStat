@@ -1,10 +1,5 @@
 # GAMESTAT
 
-![CI](https://github.com/benat/GameStatTFG/actions/workflows/ci.yml/badge.svg)
-![Web Deploy](https://github.com/benat/GameStatTFG/actions/workflows/deploy-web.yml/badge.svg)
-![Android Build](https://github.com/benat/GameStatTFG/actions/workflows/build-android.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
 > Red social ligera para reseñar y comentar videojuegos. **Ionic 8 + Angular 17 + Supabase + Capacitor 7**.
 
 ---
